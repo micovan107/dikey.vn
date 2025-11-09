@@ -1,0 +1,232 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const postsContainer = document.getElementById("posts-container");
+    const categoryList = document.querySelector(".category-list");
+    const rankingList = document.querySelector(".ranking-list");
+    const skeletonLoader = `
+        <div class="post skeleton">
+            <div class="post-header">
+                <div class="post-avatar"></div>
+                <div class="post-info">
+                    <h3></h3>
+                    <p class="post-meta"></p>
+                </div>
+            </div>
+            <p></p>
+            <p></p>
+            <div class="post-stats">
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    `;
+
+    let selectedCategory = null;
+    let selectedGrade = null;
+
+    function showSkeletonLoaders() {
+        postsContainer.innerHTML = skeletonLoader.repeat(5);
+    }
+
+    function fetchSubjects() {
+        categoryList.innerHTML = '';
+
+        const allSubjectsLi = document.createElement('li');
+        allSubjectsLi.innerHTML = `<a href="#" data-id="all" class="active"><i class="fas fa-globe"></i> Tất cả</a>`;
+        allSubjectsLi.addEventListener('click', (e) => {
+            e.preventDefault();
+            selectedCategory = null;
+            selectedGrade = null;
+            updateActiveFilters();
+            fetchPosts();
+        });
+        categoryList.appendChild(allSubjectsLi);
+
+        const categories = ["toán", "lý", "hóa", "van", "anh", "sinh", "su", "dia", "tin", "khac"];
+        const grades = {
+            "Tiểu học (Lớp 1-5)": "tieu-hoc",
+            "THCS (Lớp 6-9)": "thcs",
+            "THPT (Lớp 10-12)": "thpt",
+            "Đại học": "dai-hoc",
+            "Khác": "khac"
+        };
+
+        const categoryHeader = document.createElement('li');
+        categoryHeader.classList.add('category-header');
+        categoryHeader.innerHTML = 'Loại môn';
+        categoryList.appendChild(categoryHeader);
+
+        categories.forEach(category => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="#" data-id="category:${category}"><i class="fas fa-book"></i> ${category}</a>`;
+            li.addEventListener('click', (e) => {
+                e.preventDefault();
+                const clickedFilter = `category:${category}`;
+                selectedCategory = selectedCategory === clickedFilter ? null : clickedFilter;
+                updateActiveFilters();
+                fetchPosts();
+            });
+            categoryList.appendChild(li);
+        });
+
+        const gradeHeader = document.createElement('li');
+        gradeHeader.classList.add('category-header');
+        gradeHeader.innerHTML = 'Trình độ lớp';
+        categoryList.appendChild(gradeHeader);
+
+        Object.keys(grades).forEach(gradeLabel => {
+            const gradeValue = grades[gradeLabel];
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="#" data-id="grade:${gradeValue}"><i class="fas fa-graduation-cap"></i> ${gradeLabel}</a>`;
+            li.addEventListener('click', (e) => {
+                e.preventDefault();
+                const clickedFilter = `grade:${gradeValue}`;
+                selectedGrade = selectedGrade === clickedFilter ? null : clickedFilter;
+                updateActiveFilters();
+                fetchPosts();
+            });
+            categoryList.appendChild(li);
+        });
+    }
+
+    function updateActiveFilters() {
+        document.querySelectorAll('.category-list li a').forEach(a => a.classList.remove('active'));
+
+        if (!selectedCategory && !selectedGrade) {
+            document.querySelector('.category-list li a[data-id="all"]').classList.add('active');
+        } else {
+            if (selectedCategory) {
+                const el = document.querySelector(`.category-list li a[data-id="${selectedCategory}"]`);
+                if (el) el.classList.add('active');
+            }
+            if (selectedGrade) {
+                const el = document.querySelector(`.category-list li a[data-id="${selectedGrade}"]`);
+                if (el) el.classList.add('active');
+            }
+        }
+    }
+
+    function fetchRankings() {
+        const usersRef = db.ref('users').orderByChild('score').limitToLast(10);
+        usersRef.on('value', snapshot => {
+            rankingList.innerHTML = '';
+            let rank = 1;
+            const users = [];
+            snapshot.forEach(childSnapshot => {
+                users.push(childSnapshot.val());
+            });
+            users.reverse().forEach(user => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="rank">${rank}</span>
+                    <img src="${user.photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar" class="rank-avatar">
+                    <span class="rank-name">${user.displayName || user.email}</span>
+                    <span class="rank-score">${user.score || 0} <i class="fas fa-star"></i></span>
+                `;
+                rankingList.appendChild(li);
+                rank++;
+            });
+        });
+    }
+
+    auth.onAuthStateChanged(user => {
+        if (postsContainer) {
+            fetchPosts();
+            fetchSubjects();
+            fetchRankings();
+        }
+    });
+
+    function fetchPosts() {
+        showSkeletonLoaders();
+        let postsQuery = db.ref("posts").orderByChild("createdAt");
+
+        postsQuery.on("value", (snapshot) => {
+            postsContainer.innerHTML = "";
+            if (!snapshot.exists()) {
+                postsContainer.innerHTML = "<div class='empty-state'><i class='fas fa-folder-open'></i><p>Chưa có bài tập nào.</p></div>";
+                return;
+            }
+
+            const posts = [];
+            snapshot.forEach((childSnapshot) => {
+                const post = childSnapshot.val();
+                post.id = childSnapshot.key;
+                posts.push(post);
+            });
+
+            let filteredPosts = posts;
+
+            if (selectedCategory) {
+                const [, value] = selectedCategory.split(':');
+                filteredPosts = filteredPosts.filter(p => p.category === value);
+            }
+
+            if (selectedGrade) {
+                const [, value] = selectedGrade.split(':');
+                filteredPosts = filteredPosts.filter(p => p.grade === value);
+            }
+
+            filteredPosts.reverse();
+
+            if (filteredPosts.length === 0) {
+                postsContainer.innerHTML = "<div class='empty-state'><i class='fas fa-folder-open'></i><p>Chưa có bài tập nào trong mục này.</p></div>";
+                return;
+            }
+
+            filteredPosts.forEach(async (post) => {
+                const postElement = document.createElement("div");
+                postElement.classList.add("post");
+                postElement.style.animation = 'fadeIn 0.5s ease-in-out';
+
+                const postDate = post.createdAt ? new Date(post.createdAt).toLocaleString('vi-VN') : 'Không rõ ngày';
+
+                const userRef = db.ref(`users/${post.authorId}`);
+                const userSnapshot = await userRef.get();
+                const author = userSnapshot.val() || {};
+                const authorAvatar = author.photoURL || 'https://i.pravatar.cc/40';
+
+                let imageHtml = '';
+                if (post.imageUrl) {
+                    imageHtml = `<a href="detail.html?id=${post.id}"><img src="${post.imageUrl}" alt="Post image" class="post-image"></a>`;
+                }
+
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <a href="wall.html?uid=${post.authorId}">
+                            <img src="${authorAvatar}" alt="Avatar" class="post-avatar">
+                        </a>
+                        <div class="post-info">
+                            <p class="post-meta">Đăng bởi <a href="wall.html?uid=${post.authorId}">${author.displayName || author.email}</a> • ${postDate}</p>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        <p>${post.description ? post.description.substring(0, 200) : ''}...</p>
+                        ${imageHtml}
+                    </div>
+                    <div class="post-footer">
+                         <div class="post-stats">
+                            <span><i class="far fa-eye"></i> ${post.viewCount || 0} Lượt xem</span>
+                            <span><i class="far fa-comments"></i> ${post.replyCount || 0} Lời giải</span>
+                        </div>
+                        <a href="detail.html?id=${post.id}" class="btn btn-primary btn-sm">Xem chi tiết</a>
+                    </div>
+                `;
+
+                const postContent = postElement.querySelector('.post-content');
+                if(postContent){
+                    postContent.style.cursor = 'pointer';
+                    postContent.addEventListener('click', (e) => {
+                        if(e.target.tagName.toLowerCase() !== 'img' && e.target.closest('a') === null) {
+                            window.location.href = `detail.html?id=${post.id}`;
+                        }
+                    });
+                }
+
+                postsContainer.appendChild(postElement);
+            });
+        }, (error) => {
+            console.error("Lỗi tải bài đăng: ", error);
+            postsContainer.innerHTML = "<div class='empty-state error'><i class='fas fa-exclamation-triangle'></i><p>Đã xảy ra lỗi khi tải bài tập.</p></div>";
+        });
+    }
+});
