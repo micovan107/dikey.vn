@@ -1,0 +1,19 @@
+{
+    "achievements": {
+        "-Lxxxxxxxxxxxxxxxxx1": {
+            "title": "Người giải quyết vấn đề",
+            "description": "Đã giải quyết 10 câu hỏi",
+            "icon": "fas fa-check-circle"
+        },
+        "-Lxxxxxxxxxxxxxxxxx2": {
+            "title": "Chuyên gia Vật lý",
+            "description": "Đã trả lời 5 câu hỏi Vật lý",
+            "icon": "fas fa-atom"
+        },
+        "-Lxxxxxxxxxxxxxxxxx3": {
+            "title": "Nhà vô địch Toán học",
+            "description": "Đã giải quyết 20 câu hỏi Toán học",
+            "icon": "fas fa-calculator"
+        }
+    }
+}

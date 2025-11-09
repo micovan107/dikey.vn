@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Chủ - dikey.vn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html">dikey.vn</a></h1>
+            <nav id="nav-links">
+                <!-- Các liên kết sẽ được thêm bằng JavaScript -->
+            </nav>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar left-sidebar">
+            <h3>Phân Loại Môn Học</h3>
+            <ul class="category-list">
+                <!-- Danh sách môn học sẽ được tải vào đây -->
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="welcome-section">
+                <img src="https://i.imgur.com/hM4zJ8p.gif" alt="Welcome GIF">
+                <h2>Chào mừng đến với dikey.vn!</h2>
+                <p>Nền tảng hỏi đáp và chia sẻ kiến thức hàng đầu Việt Nam.</p>
+            </div>
+            <h2>Các Bài Tập Mới Nhất</h2>
+            <div id="posts-container">
+                <!-- Các bài tập sẽ được tải vào đây bằng JavaScript -->
+            </div>
+        </main>
+
+        <aside class="sidebar right-sidebar">
+            <h3>Bảng Xếp Hạng</h3>
+            <ul class="ranking-list">
+                <!-- Bảng xếp hạng sẽ được tải vào đây -->
+            </ul>
+        </aside>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 dikey.vn</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+
+    <!-- Your Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/subjects.js"></script>
+    <script src="js/chat_dikey.js"></script>
+    <div id="chat-container" class="chat-container-dikey">
+    <div id="chat-icon" class="chat-icon-dikey">
+        <i class="fas fa-comments"></i>
+        <span id="chat-unread-total" class="unread-count-total"></span>
+    </div>
+    <div id="chat-window" class="chat-window-dikey">
+        <div class="chat-header-dikey">
+            <h3>Tin nhắn</h3>
+            <button id="close-chat-btn">&times;</button>
+        </div>
+        <div class="chat-body-dikey">
+            <div id="chat-user-list" class="chat-user-list-dikey">
+                <!-- User list will be loaded here -->
+            </div>
+            <div id="chat-main" class="chat-main-dikey">
+                <div id="chat-main-header" class="chat-main-header-dikey">
+                    <!-- Active chat user info will be here -->
+                </div>
+                <div id="chat-messages" class="chat-messages-dikey">
+                    <!-- Messages will be loaded here -->
+                </div>
+                 <div id="reply-preview-container" class="reply-preview-container-dikey" style="display: none;">
+                    <div class="reply-preview-content">
+                        <div id="reply-preview-text"></div>
+                    </div>
+                    <button id="cancel-reply-btn">&times;</button>
+                </div>
+                <div class="chat-input-dikey">
+                    <input type="text" id="message-input" placeholder="Nhập tin nhắn...">
+                    <button id="send-message-btn"><i class="fas fa-paper-plane"></i></button>
+                     <button id="chat-bg-btn"><i class="fas fa-image"></i></button>
+                </div>
+            </div>
+        </div>
+        <div id="chat-background-selector" class="chat-background-selector-dikey" style="display: none;">
+            <h5>Chọn nền</h5>
+            <div class="background-options">
+                <img src="nen1.png" data-bg="nen1.png" class="selected">
+                <img src="nen2.png" data-bg="nen2.png">
+                <img src="nen3.png" data-bg="nen3.png">
+                <img src="nen4.png" data-bg="nen4.png">
+            </div>
+            <input type="file" id="background-upload" accept="image/*">
+        </div>
+    </div>
+</div>
+</body>
+</html>

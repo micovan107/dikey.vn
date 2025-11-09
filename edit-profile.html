@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa hồ sơ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html">Diễn đàn học tập</a></h1>
+            <form id="search-form">
+                <input type="search" name="q" placeholder="Tìm kiếm...">
+                <button type="submit" class="btn">Tìm</button>
+            </form>
+            <nav id="nav-links">
+                <!-- Các liên kết sẽ được thêm bằng JavaScript -->
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2>Chỉnh sửa hồ sơ</h2>
+        <form id="edit-profile-form">
+            <div class="form-group">
+                <label for="display-name">Tên hiển thị</label>
+                <input type="text" id="display-name" required>
+            </div>
+            <div class="form-group">
+                <label for="avatar-input">Ảnh đại diện mới</label>
+                <input type="file" id="avatar-input" accept="image/*">
+                <p><i>Để trống nếu không muốn thay đổi.</i></p>
+            </div>
+            <button type="submit" class="btn">Lưu thay đổi</button>
+        </form>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Diễn đàn học tập</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/edit-profile.js"></script>
+    <script src="js/chat_dikey.js"></script>
+    <div id="chat-container"></div>
+</body>
+</html>

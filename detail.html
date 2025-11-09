@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Bài Tập - dikey.vn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="index.html">dikey.vn</a></h1>
+            <nav id="nav-links">
+                <!-- Các liên kết sẽ được thêm bằng JavaScript -->
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div id="post-detail-container">
+            <!-- Chi tiết bài tập sẽ được tải vào đây -->
+        </div>
+        <hr>
+        <h3>Lời giải</h3>
+        <div id="solutions-container">
+            <!-- Các lời giải sẽ được tải vào đây -->
+        </div>
+        <div class="text-center" id="add-solution-button-container">
+             <a href="#" id="add-solution-link" class="btn btn-primary">Đăng lời giải</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 dikey.vn</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/detail.js"></script>
+    <script src="js/chat_dikey.js"></script>
+    <div id="chat-container"></div>
+</body>
+</html>
