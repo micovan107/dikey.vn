@@ -3,27 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chỉnh sửa hồ sơ</title>
+    <title>DikeyGo - Chia sẻ hằng ngày</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/wall.css">
 </head>
 <body>
     <script src="js/header.js"></script>
 
     <main class="container">
-        <h2>Chỉnh sửa hồ sơ</h2>
-        <form id="edit-profile-form">
-            <div class="form-group">
-                <label for="display-name">Tên hiển thị</label>
-                <input type="text" id="display-name" required>
+        <div id="wall-posts" class="tab-content active">
+            <h3>Tất cả bài đăng</h3>
+            <div id="wall-posts-container">
+                
             </div>
-            <div class="form-group">
-                <label for="avatar-input">Ảnh đại diện mới</label>
-                <input type="file" id="avatar-input" accept="image/*">
-                <p><i>Để trống nếu không muốn thay đổi.</i></p>
-            </div>
-            <button type="submit" class="btn">Lưu thay đổi</button>
-        </form>
+        </div>
     </main>
 
     <footer>
@@ -36,10 +30,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
 
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/edit-profile.js"></script>
+    <script src="js/dikeygo.js"></script>
     <script src="js/chat_dikey.js"></script>
     <div id="chat-container"></div>
 </body>

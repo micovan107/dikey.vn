@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Khảo sát Tri thức</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/create-quiz.css">
+</head>
+<body>
+    <script src="js/header.js"></script>
+    <script src="js/auth.js"></script>
+    <main>
+        <h1>Tạo Trắc nghiệm</h1>
+        <form id="create-quiz-form">
+            <div class="form-group">
+                <label for="quiz-question">Câu hỏi</label>
+                <textarea id="quiz-question" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="quiz-image">Ảnh (tùy chọn)</label>
+                <input type="file" id="quiz-image" accept="image/*">
+            </div>
+            <div id="answers-container">
+                <div class="form-group answer-group">
+                    <label>Đáp án 1</label>
+                    <input type="text" class="answer-input" required>
+                    <input type="radio" name="correct-answer" value="0" required>
+                </div>
+                <div class="form-group answer-group">
+                    <label>Đáp án 2</label>
+                    <input type="text" class="answer-input" required>
+                    <input type="radio" name="correct-answer" value="1" required>
+                </div>
+            </div>
+            <button type="button" id="add-answer-button">Thêm đáp án</button>
+            <button type="submit">Đăng</button>
+        </form>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/create-quiz.js"></script>
+</body>
+</html>

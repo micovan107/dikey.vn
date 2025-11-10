@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngân sách</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/budget.css">
+</head>
+<body>
+    <script src="js/header.js"></script>
+    <script src="js/auth.js"></script>
+    <main>
+        <h1>Ngân sách của bạn</h1>
+        <div class="budget-container">
+            <div class="balance">
+                <h2>Số dư Xu</h2>
+                <p id="xu-balance">0</p>
+            </div>
+            <div class="balance">
+                <h2>Số dư Coint</h2>
+                <p id="coint-balance">0</p>
+            </div>
+            <div class="exchange">
+                <h2>Đổi Xu sang Coint</h2>
+                <p>1000 Xu = 1 Coint</p>
+                <button id="exchange-button">Đổi</button>
+            </div>
+        </div>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/budget.js"></script>
+</body>
+</html>
