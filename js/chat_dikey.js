@@ -98,6 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatList = document.getElementById('chat-list');
         if (!chatList) return;
 
+        // Use an object to keep track of rendered users
+        if (!window.renderedUsers) {
+            window.renderedUsers = {};
+        }
+
         // Event delegation for chat list items
         if (!chatList.dataset.listenerAttached) {
             chatList.addEventListener('click', (e) => {
@@ -122,84 +127,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let roomHtml = '<h4>Nhóm chat</h4>';
         defaultRooms.forEach(room => {
-            const chatListItem = document.createElement('div');
-            chatListItem.className = 'chat-list-item';
-            chatListItem.dataset.id = room.id;
-            chatListItem.dataset.name = room.name;
-            chatListItem.dataset.isGroup = 'true';
-            chatListItem.innerHTML = `
-                <img src="${defaultGroupAvatars[room.id] || `https://i.pravatar.cc/30?u=${room.id}`}" alt="Avatar">
-                <div class="lzc_user_info">
-                    <span class="lzc_uname">${room.name}</span>
-                    <span class="lzc_utime"></span>
-                </div>
-                <span class="lzc_count_msg"></span>
-            `;
-            chatList.appendChild(chatListItem);
-            updateLastMessageAndUnread(room.id, chatListItem);
+            // Check if the room is already rendered
+            if (!window.renderedUsers[room.id]) {
+                const chatListItem = document.createElement('div');
+                chatListItem.className = 'chat-list-item';
+                chatListItem.dataset.id = room.id;
+                chatListItem.dataset.name = room.name;
+                chatListItem.dataset.isGroup = 'true';
+                chatListItem.innerHTML = `
+                    <img src="${defaultGroupAvatars[room.id] || `https://i.pravatar.cc/30?u=${room.id}`}" alt="Avatar">
+                    <div class="lzc_user_info">
+                        <span class="lzc_uname">${room.name}</span>
+                        <span class="lzc_utime"></span>
+                    </div>
+                    <span class="lzc_count_msg"></span>
+                `;
+                chatList.appendChild(chatListItem);
+                updateLastMessageAndUnread(room.id, chatListItem);
+                window.renderedUsers[room.id] = chatListItem; // Mark as rendered
+            }
         });
 
         const usersRef = db.ref('users');
-        usersRef.on('value', snapshot => {
-            // Remove old user list items and headers
-            chatList.querySelectorAll('.user-list-item, .user-list-header').forEach(el => el.remove());
-            
-            // Stop listening to old user refs to prevent memory leaks
-            if (window.userPresenceListeners) {
-                window.userPresenceListeners.forEach(({ ref, listener }) => ref.off('value', listener));
-            }
-            window.userPresenceListeners = [];
+        usersRef.on('child_added', snapshot => {
+            const user = snapshot.val();
+            const userId = snapshot.key;
 
-            let usersContainer = chatList.querySelector('.users-container');
-            if (!usersContainer) {
-                usersContainer = document.createElement('div');
-                usersContainer.className = 'users-container';
-                chatList.appendChild(usersContainer);
-            }
-            usersContainer.innerHTML = '<h4 class="user-list-header">Người dùng</h4>';
-
-            snapshot.forEach(childSnapshot => {
-                const user = childSnapshot.val();
-                const userId = childSnapshot.key;
-                if (userId !== currentUser.uid) {
-                    const userItem = document.createElement('div');
-                    userItem.className = 'chat-list-item user-list-item';
-                    userItem.dataset.id = userId;
-                    userItem.dataset.name = user.displayName || user.email;
-                    userItem.dataset.isGroup = 'false';
-                    userItem.innerHTML = `
-                        <div class="avatar-container">
-                            <img src="${user.photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar">
-                            <span class="status-indicator" id="status-${userId}"></span>
-                        </div>
-                        <div class="lzc_user_info">
-                            <span class="lzc_uname">${user.displayName || user.email}</span>
-                            <span class="lzc_utime"></span>
-                        </div>
-                        <span class="lzc_count_msg"></span>
-                    `;
-                    usersContainer.appendChild(userItem);
-
-                    const chatId = getPrivateChatId(currentUser.uid, userId);
-                    updateLastMessageAndUnread(chatId, userItem);
-
-                    // Attach presence listeners
-                    const presenceRef = db.ref(`presence/${userId}`);
-                    const listener = presenceRef.on('value', (presenceSnapshot) => {
-                        const statusIndicator = document.getElementById(`status-${userId}`);
-                        if (statusIndicator) {
-                            if (presenceSnapshot.val() === 'online') {
-                                statusIndicator.classList.add('online');
-                                statusIndicator.classList.remove('offline');
-                            } else {
-                                statusIndicator.classList.add('offline');
-                                statusIndicator.classList.remove('online');
-                            }
-                        }
-                    });
-                    window.userPresenceListeners.push({ ref: presenceRef, listener });
+            if (userId !== currentUser.uid && !window.renderedUsers[userId]) {
+                let usersContainer = chatList.querySelector('.users-container');
+                if (!usersContainer) {
+                    usersContainer = document.createElement('div');
+                    usersContainer.className = 'users-container';
+                    usersContainer.innerHTML = '<h4 class="user-list-header">Người dùng</h4>';
+                    chatList.appendChild(usersContainer);
                 }
-            });
+
+                const userItem = document.createElement('div');
+                userItem.className = 'chat-list-item user-list-item';
+                userItem.dataset.id = userId;
+                userItem.dataset.name = user.displayName || user.email;
+                userItem.dataset.isGroup = 'false';
+                userItem.innerHTML = `
+                    <div class="avatar-container">
+                        <img src="${user.photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar">
+                        <span class="status-indicator" id="status-${userId}"></span>
+                    </div>
+                    <div class="lzc_user_info">
+                        <span class="lzc_uname">${user.displayName || user.email}</span>
+                        <span class="lzc_utime"></span>
+                    </div>
+                    <span class="lzc_count_msg"></span>
+                `;
+                usersContainer.appendChild(userItem);
+                window.renderedUsers[userId] = userItem; // Mark as rendered
+
+                const chatId = getPrivateChatId(currentUser.uid, userId);
+                updateLastMessageAndUnread(chatId, userItem);
+
+                // Attach presence listeners
+                const presenceRef = db.ref(`presence/${userId}`);
+                const listener = presenceRef.on('value', (presenceSnapshot) => {
+                    const statusIndicator = document.getElementById(`status-${userId}`);
+                    if (statusIndicator) {
+                        if (presenceSnapshot.val() === 'online') {
+                            statusIndicator.classList.add('online');
+                            statusIndicator.classList.remove('offline');
+                        } else {
+                            statusIndicator.classList.add('offline');
+                            statusIndicator.classList.remove('online');
+                        }
+                    }
+                });
+                if (!window.userPresenceListeners) {
+                    window.userPresenceListeners = [];
+                }
+                window.userPresenceListeners.push({ ref: presenceRef, listener });
+            }
+        });
+
+        usersRef.on('child_changed', snapshot => {
+            const user = snapshot.val();
+            const userId = snapshot.key;
+            const userItem = window.renderedUsers[userId];
+            if (userItem) {
+                userItem.dataset.name = user.displayName || user.email;
+                userItem.querySelector('.lzc_uname').textContent = user.displayName || user.email;
+                userItem.querySelector('img').src = user.photoURL || 'https://i.pravatar.cc/30';
+            }
+        });
+
+        usersRef.on('child_removed', snapshot => {
+            const userId = snapshot.key;
+            const userItem = window.renderedUsers[userId];
+            if (userItem) {
+                userItem.remove();
+                delete window.renderedUsers[userId];
+            }
         });
     }
 
@@ -479,8 +502,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadMessages(chatId, chatBody) {
         const messagesRef = db.ref(`messages/${chatId}`).limitToLast(20);
-        messagesRef.on('value', async snapshot => {
-            chatBody.innerHTML = '';
+        let initialLoad = true;
+
+        messagesRef.on('child_added', async snapshot => {
+            if (initialLoad) return; // Skip initial data dump
+
+            const msg = snapshot.val();
+            msg.id = snapshot.key;
+            if (msg.senderId !== currentUser.uid) {
+                msg.senderColor = await getUserChatColor(msg.senderId);
+            }
+
+            const lastMessageElement = chatBody.lastElementChild;
+            let lastSenderId = null;
+            let lastMessageTimestamp = null;
+
+            if (lastMessageElement && lastMessageElement.dataset.senderId) {
+                lastSenderId = lastMessageElement.dataset.senderId;
+                lastMessageTimestamp = parseInt(lastMessageElement.dataset.timestamp, 10);
+            }
+
+            const isConsecutive = msg.senderId === lastSenderId && (msg.timestamp - lastMessageTimestamp) < 300000;
+            appendMessage(chatBody, chatId, msg, isConsecutive);
+        });
+
+        messagesRef.once('value', async snapshot => {
+            chatBody.innerHTML = ''; // Clear only on initial load
             let lastSenderId = null;
             let lastMessageTimestamp = null;
 
@@ -498,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastSenderId = msg.senderId;
                 lastMessageTimestamp = msg.timestamp;
             }
-
+            initialLoad = false;
             chatBody.scrollTop = chatBody.scrollHeight;
 
             chatBody.addEventListener('scroll', () => {
@@ -510,29 +557,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadMoreMessages(chatId, chatBody) {
-        const messagesRef = db.ref(`messages/${chatId}`).orderByKey().limitToLast(chatBody.children.length + 20);
+        const firstMessageId = chatBody.firstElementChild.dataset.messageId;
+        const messagesRef = db.ref(`messages/${chatId}`).orderByKey().endAt(firstMessageId).limitToLast(21); // Get 20 more + the last one we have
+
         messagesRef.once('value', async snapshot => {
             const oldScrollHeight = chatBody.scrollHeight;
-            chatBody.innerHTML = '';
-            let lastSenderId = null;
-            let lastMessageTimestamp = null;
-
             const messages = snapshot.val() || {};
-            const messageIds = Object.keys(messages);
+            const messageIds = Object.keys(messages).sort();
+            messageIds.pop(); // Remove the last message, which we already have
 
-            for (const messageId of messageIds) {
+            let firstNewMessageElement = null;
+
+            for (let i = messageIds.length - 1; i >= 0; i--) {
+                const messageId = messageIds[i];
                 const msg = messages[messageId];
                 msg.id = messageId;
                 if (msg.senderId !== currentUser.uid) {
                     msg.senderColor = await getUserChatColor(msg.senderId);
                 }
-                const isConsecutive = msg.senderId === lastSenderId && (msg.timestamp - lastMessageTimestamp) < 300000;
-                appendMessage(chatBody, chatId, msg, isConsecutive);
-                lastSenderId = msg.senderId;
-                lastMessageTimestamp = msg.timestamp;
+
+                const nextMessageElement = chatBody.firstElementChild;
+                let nextSenderId = null;
+                let nextMessageTimestamp = null;
+                if (nextMessageElement && nextMessageElement.dataset.senderId) {
+                    nextSenderId = nextMessageElement.dataset.senderId;
+                    nextMessageTimestamp = parseInt(nextMessageElement.dataset.timestamp, 10);
+                }
+
+                const isConsecutiveWithNext = msg.senderId === nextSenderId && (nextMessageTimestamp - msg.timestamp) < 300000;
+                if (nextMessageElement && isConsecutiveWithNext) {
+                    nextMessageElement.classList.add('consecutive');
+                    const avatar = nextMessageElement.querySelector('.message-avatar');
+                    if (avatar) avatar.style.display = 'none';
+                     const senderName = nextMessageElement.querySelector('.message-sender');
+                    if(senderName) senderName.style.display = 'none';
+                }
+
+
+                const newMessageElement = prependMessage(chatBody, chatId, msg, false); // We'll handle consecutive logic separately
+                if (!firstNewMessageElement) {
+                    firstNewMessageElement = newMessageElement;
+                }
             }
 
-            chatBody.scrollTop = chatBody.scrollHeight - oldScrollHeight;
+
+            if (firstNewMessageElement) {
+                 chatBody.scrollTop = firstNewMessageElement.offsetTop;
+            }
         });
     }
 
@@ -561,6 +632,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageSide = msg.senderId === currentUser.uid ? 'sent' : 'received';
         messageElement.classList.add('chat-message', messageSide);
         messageElement.dataset.messageId = msg.id;
+        messageElement.dataset.senderId = msg.senderId;
+        messageElement.dataset.timestamp = msg.timestamp;
+
 
         if (isConsecutive) {
             messageElement.classList.add('consecutive');
@@ -628,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         contextMenu.remove();
                     });
                 }
-            } else { 
+            } else {
                 contextMenu.innerHTML = `<div class="context-menu-item reply-btn">Trả lời</div>`;
                 const replyBtn = contextMenu.querySelector('.reply-btn');
                 if (replyBtn) {
@@ -650,13 +724,119 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.removeEventListener('click', closeMenuOnClickOutside);
                 }
             };
-            setTimeout(() => { 
+            setTimeout(() => {
                 document.addEventListener('click', closeMenuOnClickOutside);
             }, 0);
         });
 
         chatBody.appendChild(messageElement);
         chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function prependMessage(chatBody, chatId, msg, isConsecutive) {
+        const messageElement = document.createElement('div');
+        const messageSide = msg.senderId === currentUser.uid ? 'sent' : 'received';
+        messageElement.classList.add('chat-message', messageSide);
+        messageElement.dataset.messageId = msg.id;
+        messageElement.dataset.senderId = msg.senderId;
+        messageElement.dataset.timestamp = msg.timestamp;
+
+
+        if (isConsecutive) {
+            messageElement.classList.add('consecutive');
+        }
+
+        const senderPhotoURL = msg.senderPhotoURL || `https://i.pravatar.cc/40?u=${msg.senderId}`;
+
+        const avatarHtml = messageSide === 'received' ? `
+            <div class="message-avatar-container">
+                ${!isConsecutive ? `<a href="wall.html?id=${msg.senderId}" target="_blank"><img src="${senderPhotoURL}" class="message-avatar" alt="Avatar"></a>` : ''}
+            </div>
+        ` : '';
+
+        const imageRegex = /\[image\](.*)/;
+        const imageMatch = msg.text.match(imageRegex);
+
+        let messageBodyHtml;
+        if (imageMatch) {
+            const imageUrl = imageMatch[1];
+            messageBodyHtml = `<img src="${imageUrl}" alt="Image" style="max-width: 200px; border-radius: 10px; cursor: pointer;" onclick="window.open('${imageUrl}', '_blank')">`;
+        } else if (msg.text.startsWith('[retracted]')) {
+            messageBodyHtml = `<div class="message-text retracted"><em>Tin nhắn đã được thu hồi</em></div>`;
+        } else if (msg.replyTo) {
+            messageBodyHtml = `
+                <div class="reply-container">
+                    <div class="reply-to">Trả lời <strong>${msg.replyTo.senderName}</strong></div>
+                    <div class="reply-text">${msg.replyTo.text}</div>
+                </div>
+                <div class="message-text">${msg.text}</div>
+            `;
+        } else {
+            messageBodyHtml = `<div class="message-text">${msg.text}</div>`;
+        }
+
+        const senderNameHtml = messageSide === 'received' && !isConsecutive ? `<div class="message-sender" style="color: ${msg.senderColor || '#000'}"><a href="wall.html?id=${msg.senderId}" target="_blank" style="color: inherit;">${msg.senderName}</a></div>` : '';
+
+        const contentHtml = `
+            <div class="message-content">
+                ${senderNameHtml}
+                ${messageBodyHtml}
+                <div class="message-time">${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                <div class="message-actions"><i class="fas fa-ellipsis-h"></i></div>
+            </div>
+        `;
+
+        messageElement.innerHTML = avatarHtml + contentHtml;
+
+        const actions = messageElement.querySelector('.message-actions');
+
+        actions.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            const existingMenus = document.querySelectorAll('.message-context-menu');
+            existingMenus.forEach(menu => menu.remove());
+
+            const contextMenu = document.createElement('div');
+            contextMenu.className = 'message-context-menu';
+
+            if (messageSide === 'sent') {
+                contextMenu.innerHTML = `<div class="context-menu-item retract-btn">Thu hồi</div>`;
+                const retractBtn = contextMenu.querySelector('.retract-btn');
+                if (retractBtn) {
+                    retractBtn.addEventListener('click', () => {
+                        retractMessage(chatId, msg.id);
+                        contextMenu.remove();
+                    });
+                }
+            } else {
+                contextMenu.innerHTML = `<div class="context-menu-item reply-btn">Trả lời</div>`;
+                const replyBtn = contextMenu.querySelector('.reply-btn');
+                if (replyBtn) {
+                    replyBtn.addEventListener('click', () => {
+                        const chatWindow = chatBody.closest('.chat-window');
+                        chatWindow.dispatchEvent(new CustomEvent('setReplyTo', {
+                            detail: { messageId: msg.id, message: msg }
+                        }));
+                        contextMenu.remove();
+                    });
+                }
+            }
+
+            messageElement.appendChild(contextMenu);
+
+            const closeMenuOnClickOutside = (event) => {
+                if (!contextMenu.contains(event.target)) {
+                    contextMenu.remove();
+                    document.removeEventListener('click', closeMenuOnClickOutside);
+                }
+            };
+            setTimeout(() => {
+                document.addEventListener('click', closeMenuOnClickOutside);
+            }, 0);
+        });
+
+        chatBody.prepend(messageElement);
+        return messageElement;
     }
 
     function listenForNewMessages() {

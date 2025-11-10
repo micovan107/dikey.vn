@@ -534,14 +534,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function addComment(postId, text) {
-        const commentRef = db.ref(`wall_posts/${postId}/comments`);
-        const newCommentRef = commentRef.push();
-        newCommentRef.set({
-            uid: currentUser.uid,
-            displayName: currentUser.displayName || currentUser.email.split('@')[0],
-            photoURL: currentUser.photoURL || 'https://i.pravatar.cc/30',
-            text: text,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
+        if (!currentUser) return;
+
+        const userRef = db.ref(`users/${currentUser.uid}`);
+        userRef.once('value', (snapshot) => {
+            const userData = snapshot.val();
+            if (!userData) {
+                console.error("Could not find user data for current user.");
+                return;
+            }
+
+            const commentsRef = db.ref(`wall_posts/${postId}/comments`);
+            const newCommentRef = commentsRef.push();
+            newCommentRef.set({
+                uid: currentUser.uid,
+                text: text,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                displayName: userData.displayName || "Người dùng ẩn danh",
+                photoURL: userData.photoURL || 'https://via.placeholder.com/30'
+            });
         });
     }
 

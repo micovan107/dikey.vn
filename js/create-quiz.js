@@ -1,7 +1,3 @@
-
-const storage = firebase.storage();
-
-
 let currentUser;
 
 auth.onAuthStateChanged((user) => {
@@ -50,9 +46,25 @@ createQuizForm.addEventListener('submit', async (e) => {
 
     let imageUrl = null;
     if (imageFile) {
-        const storageRef = storage.ref(`quiz-images/${Date.now()}_${imageFile.name}`);
-        await storageRef.put(imageFile);
-        imageUrl = await storageRef.getDownloadURL();
+        const formData = new FormData();
+        formData.append('file', imageFile);
+        formData.append('upload_preset', cloudinaryConfig.uploadPreset); 
+
+        try {
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`, { 
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(`Cloudinary upload failed: ${data.error.message}`);
+            }
+            imageUrl = data.secure_url;
+        } catch (error) {
+            console.error('Error uploading image to Cloudinary:', error);
+            alert('Có lỗi xảy ra khi tải lên hình ảnh.');
+            return;
+        }
     }
 
     try {

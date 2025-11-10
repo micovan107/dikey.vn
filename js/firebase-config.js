@@ -18,5 +18,5 @@ const db = firebase.database();
 // QUAN TRỌNG: ĐIỀN THÔNG TIN CLOUDINARY CỦA BẠN VÀO ĐÂY
 const cloudinaryConfig = {
     cloudName: 'dw8rpacnn',
-    uploadPreset: 'nguyentiennamT' // Preset không cần chữ ký (unsigned)
+    uploadPreset: 'nguyentiennam' // Preset không cần chữ ký (unsigned)
 };
