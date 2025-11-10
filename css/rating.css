@@ -1,0 +1,37 @@
+.danh_gia_wrapper {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.ket_qua_danh_gia {
+    font-size: 3em;
+    font-weight: bold;
+    color: #ff9800;
+}
+
+.chu_mo {
+    font-size: 0.9em;
+    color: #777;
+}
+
+.tbl_rating td {
+    padding: 2px 5px;
+}
+
+.codexworld_rating_widget {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+.codexworld_rating_widget li {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+}
+
+.overall-rating {
+    margin-top: 10px;
+}
