@@ -13,10 +13,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 photoURL: user.photoURL || defaultPhotoURL
             });
 
+            // Daily login bonus
+            userRef.once('value').then((snapshot) => {
+                const userData = snapshot.val() || {};
+                const lastLogin = userData.lastLogin;
+                const today = new Date().toDateString();
+                const lastLoginDate = lastLogin ? new Date(lastLogin).toDateString() : null;
+
+                let currentCoins = userData.coins || userData.xu || 0;
+
+                const updates = {};
+                if (userData.hasOwnProperty('xu')) {
+                    updates.xu = null;
+                }
+
+                if (lastLoginDate !== today) {
+                    currentCoins += 100;
+                    updates.lastLogin = firebase.database.ServerValue.TIMESTAMP;
+                    updates.coins = currentCoins;
+                    userRef.update(updates).then(() => {
+                        alert("Bạn đã được tặng 100 xu vì đăng nhập ngày hôm nay!");
+                    });
+                } else {
+                    updates.lastLogin = firebase.database.ServerValue.TIMESTAMP;
+                    updates.coins = currentCoins;
+                    userRef.update(updates);
+                }
+            });
+
             const displayName = user.displayName || user.email.split('@')[0];
             const photoURL = user.photoURL || defaultPhotoURL;
 
-            navLinks.innerHTML = `
+            if (navLinks) {
+                navLinks.innerHTML = `
                     <a href="post.html" class="btn">Đăng bài</a>
                     <div class="notification-icon" id="notification-icon">
                         <i class="fas fa-bell"></i>
@@ -26,12 +55,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         <img src="${photoURL}" alt="Avatar" class="nav-avatar">
                         <span class="nav-user-name">${displayName}</span>
                         <div class="dropdown-content">
-                            <a href="profile.html">Hồ sơ</a>
+                           
                             <a href="wall.html?uid=${user.uid}">Trang cá nhân</a>
-                            <a href="#" id="logout-button">Đăng xuất</a>
+                            
+                            <a href="edit-profile.html">Hồ sơ</a>
+                            <a href="quiz-list.html">Trắc nghiệm</a>
+                             <a href="dikeygo.html">Chia sẻ hằng ngày</a>
+                              <a href="shop.html">Quà ảo</a>
+                               <a href="budget.html">Ngân sách</a>
+                               <a href="#" id="logout-button">Đăng xuất</a>
                         </div>
                     </div>
                 `;
+            }
 
                 // Thêm cấu trúc modal vào body
                 const modalHtml = `
@@ -137,3 +173,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+    const googleSignInBtn = document.getElementById('google-signin-btn');
+    if (googleSignInBtn) {
+        googleSignInBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    const credential = result.credential;
+                    const token = credential.accessToken;
+                    // The signed-in user info.
+                    const user = result.user;
+                    window.location.href = 'index.html';
+                }).catch((error) => {
+                    // Handle Errors here.
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    // The email of the user's account used.
+                    const email = error.email;
+                    // The firebase.auth.AuthCredential type that was used.
+                    const credential = error.credential;
+                    console.error("Google Sign-In Error:", errorMessage);
+                    alert("Đăng nhập với Google thất bại: " + errorMessage);
+                });
+        });
+    }

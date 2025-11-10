@@ -52,10 +52,15 @@ document.addEventListener("DOMContentLoaded", () => {
             updateData.photoURL = newAvatarUrl;
         }
 
-        userRef.update(updateData)
-            .then(() => {
+        Promise.all([
+            userRef.update(updateData),
+            currentUser.updateProfile({
+                displayName: newDisplayName,
+                photoURL: newAvatarUrl || currentUser.photoURL
+            })
+        ]).then(() => {
                 alert("Hồ sơ đã được cập nhật thành công!");
-                window.location.href = 'profile.html';
+                window.location.href = `profile.html?uid=${currentUser.uid}`;
             })
             .catch(error => {
                 console.error("Lỗi cập nhật hồ sơ:", error);

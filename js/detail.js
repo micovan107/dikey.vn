@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 postDetailContainer.innerHTML = `
                     <p class="post-meta">
                         Đăng bởi: 
-                        <a href="wall.html?uid=${post.authorId}" class="post-user-link">
+                        <a href="wall.html?id=${post.authorId}" class="post-user-link">
                             <img src="${authorPhotoURL}" alt="Avatar" class="post-avatar">
                             <span>${authorDisplayName}</span>
                         </a>
@@ -63,6 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="post-description">${post.description.replace(/\n/g, '<br>')}</div>
                     ${imageHtml}
                 `;
+
+                const postAuthorInfo = document.getElementById('post-author-info');
+                if (postAuthorInfo) {
+                    postAuthorInfo.innerHTML = `
+                        <a href="gift-coins.html?recipient=${post.authorId}" class="btn btn-primary">Tặng xu</a>
+                    `;
+                }
             });
 
             loadSolutions();
@@ -117,10 +124,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 container.innerHTML = `
                     <div class="lz-table--header">
                         <div class="lz-table-info">
-                            <a href="wall.html?uid=${solution.authorId}">
+                            <a href="wall.html?id=${solution.authorId}">
                                 <img src="${authorPhotoURL}" alt="Avatar">
                             </a>
-                            <a class="laz-table--username" target="_blank" href="wall.html?uid=${solution.authorId}">${authorDisplayName}</a>
+                            <a class="laz-table--username" target="_blank" href="wall.html?id=${solution.authorId}">${authorDisplayName}</a>
                             <div class="lz-dot"></div>
                             <div class="laz-table--time">${solutionDate}</div>
                         </div>

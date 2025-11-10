@@ -5,6 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentUser;
     let openChatWindows = [];
 
+    const defaultGroupAvatars = {
+        'group_hoc_tap': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxqEOBB_zQRIYACT3EoyGiaIQ9mjLYDdjjEQ&s',
+        'group_tro_chuyen': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWgpRn0toA90-YGGROPeTV0mzQon8am6avTQ&s',
+        'group_giao_luu': 'https://cdn.lazi.vn/storage/uploads/photo/1762689393_lazi_235423.jpg',
+        'group_cong_dong_viet': 'https://cdn.lazi.vn/storage/uploads/photo/1762689473_lazi_103824.png'
+    };
+
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
@@ -121,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chatListItem.dataset.name = room.name;
             chatListItem.dataset.isGroup = 'true';
             chatListItem.innerHTML = `
-                <img src="https://i.pravatar.cc/30?u=${room.id}" alt="Avatar">
+                <img src="${defaultGroupAvatars[room.id] || `https://i.pravatar.cc/30?u=${room.id}`}" alt="Avatar">
                 <div class="lzc_user_info">
                     <span class="lzc_uname">${room.name}</span>
                     <span class="lzc_utime"></span>
@@ -269,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.innerHTML = `
             <div class="chat-window-header">
                 <div class="chat-header-info">
-                    <img src="${isGroup ? `https://i.pravatar.cc/30?u=${chatId}` : (await getUserData(chatId.replace(currentUser.uid, '').replace('_', ''))).photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar" class="chat-avatar" data-uid="${isGroup ? '' : chatId.replace(currentUser.uid, '').replace('_', '')}">
+                    <img src="${isGroup ? defaultGroupAvatars[chatId] || `https://i.pravatar.cc/30?u=${chatId}` : (await getUserData(chatId.replace(currentUser.uid, '').replace('_', ''))).photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar" class="chat-avatar" data-uid="${isGroup ? '' : chatId.replace(currentUser.uid, '').replace('_', '')}">
                     <div>
                         <span class="chat-username" data-uid="${isGroup ? '' : chatId.replace(currentUser.uid, '').replace('_', '')}">${chatName}</span>
                         <span class="chat-status"></span>
@@ -313,8 +320,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const uid = chatAvatar.dataset.uid;
 
         if (uid) {
-            chatAvatar.addEventListener('click', () => window.open(`profile.html?uid=${uid}`, '_blank'));
-            chatUsername.addEventListener('click', () => window.open(`profile.html?uid=${uid}`, '_blank'));
+            chatAvatar.addEventListener('click', () => window.open(`wall.html?id=${uid}`, '_blank'));
+            chatUsername.addEventListener('click', () => window.open(`wall.html?id=${uid}`, '_blank'));
 
             const presenceRef = db.ref(`presence/${uid}`);
             const chatStatus = chatWindow.querySelector('.chat-status');
@@ -563,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const avatarHtml = messageSide === 'received' ? `
             <div class="message-avatar-container">
-                ${!isConsecutive ? `<a href="profile.html?uid=${msg.senderId}" target="_blank"><img src="${senderPhotoURL}" class="message-avatar" alt="Avatar"></a>` : ''}
+                ${!isConsecutive ? `<a href="wall.html?id=${msg.senderId}" target="_blank"><img src="${senderPhotoURL}" class="message-avatar" alt="Avatar"></a>` : ''}
             </div>
         ` : '';
 
@@ -588,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
             messageBodyHtml = `<div class="message-text">${msg.text}</div>`;
         }
 
-        const senderNameHtml = messageSide === 'received' && !isConsecutive ? `<div class="message-sender" style="color: ${msg.senderColor || '#000'}"><a href="profile.html?uid=${msg.senderId}" target="_blank" style="color: inherit;">${msg.senderName}</a></div>` : '';
+        const senderNameHtml = messageSide === 'received' && !isConsecutive ? `<div class="message-sender" style="color: ${msg.senderColor || '#000'}"><a href="wall.html?id=${msg.senderId}" target="_blank" style="color: inherit;">${msg.senderName}</a></div>` : '';
 
         const contentHtml = `
             <div class="message-content">

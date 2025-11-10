@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         categoryList.appendChild(allSubjectsLi);
 
-        const categories = ["toán", "lý", "hóa", "van", "anh", "sinh", "su", "dia", "tin", "khac"];
+        const categories = ["Toán học ", "Vật lý", "Hóa học", "Văn học", "Tiếng anh", "Sinh học", "Lịch sử", "Địa lý", "Tin học", "Khác"];
         const grades = {
             "Tiểu học (Lớp 1-5)": "tieu-hoc",
             "THCS (Lớp 6-9)": "thcs",
@@ -112,18 +112,36 @@ document.addEventListener("DOMContentLoaded", () => {
             let rank = 1;
             const users = [];
             snapshot.forEach(childSnapshot => {
-                users.push(childSnapshot.val());
+                const user = childSnapshot.val();
+                user.uid = childSnapshot.key; // Make sure uid is available
+                users.push(user);
             });
-            users.reverse().forEach(user => {
+            users.reverse().forEach((user, index) => {
                 const li = document.createElement('li');
+                let crown = '';
+                if (index === 0) {
+                    li.classList.add('rank-gold');
+                    crown = '<i class="fas fa-crown crown-gold"></i>';
+                } else if (index === 1) {
+                    li.classList.add('rank-silver');
+                    crown = '<i class="fas fa-crown crown-silver"></i>';
+                } else if (index === 2) {
+                    li.classList.add('rank-bronze');
+                    crown = '<i class="fas fa-crown crown-bronze"></i>';
+                }
+
                 li.innerHTML = `
-                    <span class="rank">${rank}</span>
-                    <img src="${user.photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar" class="rank-avatar">
-                    <span class="rank-name">${user.displayName || user.email}</span>
+                    <span class="rank">${index + 1}</span>
+                    <a href="wall.html?id=${user.uid}" class="rank-user-link">
+                        <div class="rank-avatar-container">
+                            <img src="${user.photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar" class="rank-avatar">
+                            ${crown}
+                        </div>
+                        <span class="rank-name">${user.displayName || user.email}</span>
+                    </a>
                     <span class="rank-score">${user.score || 0} <i class="fas fa-star"></i></span>
                 `;
                 rankingList.appendChild(li);
-                rank++;
             });
         });
     }
@@ -192,11 +210,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 postElement.innerHTML = `
                     <div class="post-header">
-                        <a href="wall.html?uid=${post.authorId}">
+                        <a href="wall.html?id=${post.authorId}">
                             <img src="${authorAvatar}" alt="Avatar" class="post-avatar">
                         </a>
                         <div class="post-info">
-                            <p class="post-meta">Đăng bởi <a href="wall.html?uid=${post.authorId}">${author.displayName || author.email}</a> • ${postDate}</p>
+                            <p class="post-meta">Đăng bởi <a href="wall.html?id=${post.authorId}">${author.displayName || author.email}</a> • ${postDate}</p>
                         </div>
                     </div>
                     <div class="post-content">
