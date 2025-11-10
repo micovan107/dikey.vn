@@ -692,6 +692,8 @@ footer {
 .message-content {
     display: flex;
     flex-direction: column;
+    position: relative;
+    width: fit-content;
 }
 
 .chat-message.sent .message-content {
@@ -725,6 +727,53 @@ footer {
     background-color: #e9ecef;
     color: #333;
 }
+
+.message-actions {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    padding: 2px 5px;
+}
+
+.chat-message:hover .message-actions {
+    display: block;
+    opacity: 0.6;
+}
+
+.chat-message.sent .message-actions {
+    right: 100%;
+    margin-right: 2px;
+}
+
+.chat-message.received .message-actions {
+    left: 100%;
+    margin-left: 2px;
+}
+
+.message-actions-menu {
+    position: absolute;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 5px 0;
+    z-index: 1;
+    min-width: 100px;
+}
+
+.message-actions-menu div {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.message-actions-menu div:hover {
+    background-color: #f0f0f0;
+}
+
 
 .message-time {
     font-size: 10px;
@@ -1624,88 +1673,30 @@ footer {
     margin-left: 5px;
 }
 
-/* Fix for message actions positioning and style */
 .message-content {
-    position: relative !important;
-}
-
-.message-actions {
-    position: absolute !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    opacity: 0 !important;
-    transition: opacity 0.2s !important;
-    cursor: pointer !important;
-    padding: 5px !important;
-    background: none !important;
-}
-
-.message-content:hover .message-actions {
-    opacity: 0.5 !important;
-}
-
-.chat-message.sent .message-actions {
-    left: -35px !important; /* Adjust as needed */
-    right: auto !important;
-}
-
-.chat-message.received .message-actions {
-    right: -35px !important; /* Adjust as needed */
-    left: auto !important;
-}
-
-.chat-list-item .unread-badge {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: red;
-    color: white;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 10px;
-    font-weight: bold;
-}
-
-.message-container {
-    /* This position:relative is now .chat-message */
-}
-
-.message-actions {
-    position: absolute;
-    top: 100%;
-    background-color: #f9f9f9;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
-    right: 0;
+    position: relative;
 }
 
 .message-actions {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background-color: #f0f0f0;
-    border-radius: 15px;
-    padding: 2px 5px;
-    display: none; /* Hidden by default */
+    display: none;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
 }
 
 .chat-message:hover .message-actions {
     display: block;
-    opacity: 1;
 }
 
 .chat-message.sent .message-actions {
-    left: 10px;
-    right: auto;
+    right: 100%;
+    margin-right: 5px;
 }
 
 .chat-message.received .message-actions {
-    right: 10px;
-    left: auto;
+    left: 100%;
+    margin-left: 5px;
 }
 
 .message-context-menu {
