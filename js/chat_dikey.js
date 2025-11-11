@@ -2,8 +2,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatContainer = document.getElementById('chat-container');
     if (!chatContainer) return;
 
+    // Inject CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        .chat-list-item {
+            position: relative;
+        }
+
+        .group-info-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+            cursor: pointer;
+        }
+
+        .group-info-body {
+            padding: 10px;
+        }
+        .group-info-body button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .member-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+        }
+
+        .remove-member-btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    `;
+    document.head.appendChild(style);
+
     let currentUser;
     let openChatWindows = [];
+    let chatList;
 
     const defaultGroupAvatars = {
         'group_hoc_tap': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxqEOBB_zQRIYACT3EoyGiaIQ9mjLYDdjjEQ&s',
@@ -39,11 +94,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="chat-list-container">
                         <div class="chat-search-container">
                             <input type="text" id="chat-user-search" placeholder="Tìm kiếm người dùng...">
+                            <button id="create-group-chat" title="Tạo nhóm chat"><i class="fas fa-users"></i></button>
                         </div>
-                        <div id="chat-list"></div>
+                        <div id="chat-list">
+                            <div class="default-rooms-container"></div>
+                            <div class="private-groups-container"></div>
+                            <div class="users-container"></div>
+                        </div>
                     </div>
                 </div>
             `;
+
+            chatList = document.getElementById('chat-list');
 
             const chatHeader = document.querySelector('.chat-header');
             const toggleButton = document.getElementById('toggle-chat-list');
@@ -75,6 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
+            document.getElementById('create-group-chat').addEventListener('click', () => {
+                openGroupCreationWindow();
+            });
+
             loadChatList();
             listenForNewMessages();
         } else {
@@ -83,6 +149,147 @@ document.addEventListener('DOMContentLoaded', () => {
             openChatWindows = [];
         }
     });
+
+    function openGroupCreationWindow() {
+        const groupCreationWindow = document.createElement('div');
+        groupCreationWindow.className = 'chat-window';
+        groupCreationWindow.style.display = 'block';
+        groupCreationWindow.innerHTML = `
+            <div class="chat-header">
+                <span>Tạo nhóm mới</span>
+                <button class="close-chat-window"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="chat-messages"></div>
+            <div class="chat-input">
+                <input type="text" id="group-name-input" placeholder="Nhập tên nhóm...">
+                <input type="file" id="group-avatar-input" accept="image/*">
+                <div id="user-selection-list"></div>
+                <button id="create-group-button">Tạo nhóm</button>
+            </div>
+        `;
+        document.body.appendChild(groupCreationWindow);
+
+        const userSelectionList = groupCreationWindow.querySelector('#user-selection-list');
+
+
+        const usersRef = db.ref('users');
+        usersRef.once('value', snapshot => {
+            snapshot.forEach(childSnapshot => {
+                const user = childSnapshot.val();
+                const userId = childSnapshot.key;
+                if (userId !== currentUser.uid) {
+                    const userElement = document.createElement('div');
+                    userElement.innerHTML = `
+                        <input type="checkbox" id="${userId}" value="${userId}">
+                        <label for="${userId}">${user.displayName || user.email}</label>
+                    `;
+                    userSelectionList.appendChild(userElement);
+                }
+            });
+        });
+
+        groupCreationWindow.querySelector('.close-chat-window').addEventListener('click', () => {
+            groupCreationWindow.remove();
+        });
+
+        groupCreationWindow.querySelector('#create-group-button').addEventListener('click', async () => {
+            const groupName = document.getElementById('group-name-input').value;
+            const selectedUsers = Array.from(userSelectionList.querySelectorAll('input:checked')).map(input => input.value);
+            const avatarFile = document.getElementById('group-avatar-input').files[0];
+
+            if (groupName && selectedUsers.length > 0) {
+                let avatarUrl = '';
+                if (avatarFile) {
+                    avatarUrl = await uploadToCloudinary(avatarFile);
+                }
+
+                selectedUsers.push(currentUser.uid);
+                createGroupChat(groupName, selectedUsers, avatarUrl);
+                groupCreationWindow.remove();
+            }
+        });
+    }
+
+    async function uploadToCloudinary(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        return data.secure_url;
+    }
+
+    function createGroupChat(groupName, members, avatarUrl) {
+        const newGroupRef = db.ref('groups').push();
+        const groupId = newGroupRef.key;
+
+        const membersObject = {};
+        members.forEach(memberId => {
+            membersObject[memberId] = true;
+        });
+
+        newGroupRef.set({
+            name: groupName,
+            members: membersObject,
+            avatar: avatarUrl,
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            createdBy: currentUser.uid
+        });
+
+        // Add the group to each member's chat list
+        members.forEach(memberId => {
+            db.ref(`users/${memberId}/groups/${groupId}`).set(true);
+        });
+
+        openChatWindow({
+            id: groupId,
+            name: groupName,
+            isGroup: true,
+            avatarUrl: avatarUrl
+        });
+
+        // Manually add the new group to the chat list
+        const privateGroupsContainer = document.querySelector('.private-groups-container');
+        if (privateGroupsContainer) {
+            if (privateGroupsContainer.children.length === 0) {
+                privateGroupsContainer.innerHTML = '<h4 class="user-list-header"</h4>';
+            }
+            const group = {
+                name: groupName,
+                avatar: avatarUrl,
+                createdBy: currentUser.uid
+            };
+            const chatListItem = document.createElement('div');
+            chatListItem.className = 'chat-list-item';
+            chatListItem.dataset.id = groupId;
+            chatListItem.dataset.name = group.name;
+            chatListItem.dataset.isGroup = 'true';
+            chatListItem.dataset.avatar = group.avatar || ''; // Store avatar URL
+            chatListItem.innerHTML = `
+                <img src="${group.avatar || 'https://i.pravatar.cc/30?u=' + groupId}" alt="Avatar">
+                <div class="lzc_user_info">
+                    <span class="lzc_uname">${group.name}</span>
+                    <span class="lzc_utime"></span>
+                </div>
+                <span class="lzc_count_msg"></span>
+                <span class="group-info-btn"><i class="fas fa-info-circle"></i></span>
+            `;
+            
+            const groupInfoBtn = chatListItem.querySelector('.group-info-btn');
+            groupInfoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openGroupInfoModal(groupId, group.name, group.createdBy);
+            });
+            privateGroupsContainer.appendChild(chatListItem);
+            updateLastMessageAndUnread(groupId, chatListItem);
+            window.renderedUsers[groupId] = chatListItem;
+        }
+    }
 
     function getPrivateChatId(userId1, userId2) {
         return userId1 < userId2 ? `${userId1}_${userId2}` : `${userId2}_${userId1}`;
@@ -95,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadChatList() {
-        const chatList = document.getElementById('chat-list');
         if (!chatList) return;
 
         // Use an object to keep track of rendered users
@@ -111,8 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetId = item.dataset.id;
                     const chatName = item.dataset.name;
                     const isGroup = item.dataset.isGroup === 'true';
+                    const avatarUrl = item.dataset.avatar;
                     const chatId = isGroup ? targetId : getPrivateChatId(currentUser.uid, targetId);
-                    openChatWindow(chatId, chatName, isGroup);
+                    openChatWindow({ id: chatId, name: chatName, isGroup, avatarUrl });
                 }
             });
             chatList.dataset.listenerAttached = 'true';
@@ -125,41 +332,88 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'group_cong_dong_viet', name: 'Cộng đồng việt', isGroup: true }
         ];
 
-        let roomHtml = '<h4>Nhóm chat</h4>';
-        defaultRooms.forEach(room => {
-            // Check if the room is already rendered
-            if (!window.renderedUsers[room.id]) {
-                const chatListItem = document.createElement('div');
-                chatListItem.className = 'chat-list-item';
-                chatListItem.dataset.id = room.id;
-                chatListItem.dataset.name = room.name;
-                chatListItem.dataset.isGroup = 'true';
-                chatListItem.innerHTML = `
-                    <img src="${defaultGroupAvatars[room.id] || `https://i.pravatar.cc/30?u=${room.id}`}" alt="Avatar">
-                    <div class="lzc_user_info">
-                        <span class="lzc_uname">${room.name}</span>
-                        <span class="lzc_utime"></span>
-                    </div>
-                    <span class="lzc_count_msg"></span>
-                `;
-                chatList.appendChild(chatListItem);
-                updateLastMessageAndUnread(room.id, chatListItem);
-                window.renderedUsers[room.id] = chatListItem; // Mark as rendered
-            }
+        const defaultRoomsContainer = chatList.querySelector('.default-rooms-container');
+        const privateGroupsContainer = chatList.querySelector('.private-groups-container');
+        const usersContainer = chatList.querySelector('.users-container');
+
+        // Load default rooms
+        if (defaultRoomsContainer.children.length === 0) {
+            defaultRoomsContainer.innerHTML = '<h4>Nhóm chat</h4>';
+            defaultRooms.forEach(room => {
+                if (!window.renderedUsers[room.id]) {
+                    const chatListItem = document.createElement('div');
+                    chatListItem.className = 'chat-list-item';
+                    chatListItem.dataset.id = room.id;
+                    chatListItem.dataset.name = room.name;
+                    chatListItem.dataset.isGroup = 'true';
+                    chatListItem.innerHTML = `
+                        <img src="${defaultGroupAvatars[room.id] || `https://i.pravatar.cc/30?u=${room.id}`}" alt="Avatar">
+                        <div class="lzc_user_info">
+                            <span class="lzc_uname">${room.name}</span>
+                            <span class="lzc_utime"></span>
+                        </div>
+                        <span class="lzc_count_msg"></span>
+                    `;
+                    defaultRoomsContainer.appendChild(chatListItem);
+                    updateLastMessageAndUnread(room.id, chatListItem);
+                    window.renderedUsers[room.id] = chatListItem;
+                }
+            });
+        }
+
+
+
+        // Load private groups
+        const userGroupsRef = db.ref(`users/${currentUser.uid}/groups`);
+        userGroupsRef.once('value', snapshot => {
+            snapshot.forEach(childSnapshot => {
+                const groupId = childSnapshot.key;
+                const groupRef = db.ref(`groups/${groupId}`);
+                groupRef.once('value', groupSnapshot => {
+                    const group = groupSnapshot.val();
+                    if (group && !window.renderedUsers[groupId]) {
+                        if (privateGroupsContainer.children.length === 0) {
+                            privateGroupsContainer.innerHTML = '<h4 class="user-list-header">Nhóm chat riêng</h4>';
+                        }
+
+                        const chatListItem = document.createElement('div');
+                        chatListItem.className = 'chat-list-item';
+                        chatListItem.dataset.id = groupId;
+                        chatListItem.dataset.name = group.name;
+                        chatListItem.dataset.isGroup = 'true';
+                        chatListItem.dataset.avatar = group.avatar || ''; // Store avatar URL
+                        chatListItem.innerHTML = `
+                            <img src="${group.avatar || 'https://i.pravatar.cc/30?u=' + groupId}" alt="Avatar">
+                            <div class="lzc_user_info">
+                                <span class="lzc_uname">${group.name}</span>
+                                <span class="lzc_utime"></span>
+                            </div>
+                            <span class="lzc_count_msg"></span>
+                            <span class="group-info-btn"><i class="fas fa-info-circle"></i></span>
+                        `;
+
+                        const groupInfoBtn = chatListItem.querySelector('.group-info-btn');
+                        groupInfoBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openGroupInfoModal(groupId, group.name, group.createdBy);
+                        });
+                        privateGroupsContainer.appendChild(chatListItem);
+                        updateLastMessageAndUnread(groupId, chatListItem);
+                        window.renderedUsers[groupId] = chatListItem;
+                    }
+                });
+            });
         });
 
+        // Load users
         const usersRef = db.ref('users');
         usersRef.on('child_added', snapshot => {
             const user = snapshot.val();
             const userId = snapshot.key;
 
             if (userId !== currentUser.uid && !window.renderedUsers[userId]) {
-                let usersContainer = chatList.querySelector('.users-container');
-                if (!usersContainer) {
-                    usersContainer = document.createElement('div');
-                    usersContainer.className = 'users-container';
+                if (usersContainer.children.length === 0) {
                     usersContainer.innerHTML = '<h4 class="user-list-header">Người dùng</h4>';
-                    chatList.appendChild(usersContainer);
                 }
 
                 const userItem = document.createElement('div');
@@ -179,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="lzc_count_msg"></span>
                 `;
                 usersContainer.appendChild(userItem);
-                window.renderedUsers[userId] = userItem; // Mark as rendered
+                window.renderedUsers[userId] = userItem;
 
                 const chatId = getPrivateChatId(currentUser.uid, userId);
                 updateLastMessageAndUnread(chatId, userItem);
@@ -222,6 +476,185 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userItem) {
                 userItem.remove();
                 delete window.renderedUsers[userId];
+            }
+        });
+    }
+
+    async function openGroupInfoModal(groupId, groupName, createdBy) {
+        const isCreator = currentUser.uid === createdBy;
+
+        const existingWindow = document.querySelector('.group-info-window');
+        if (existingWindow) {
+            existingWindow.remove();
+        }
+
+        const infoWindow = document.createElement('div');
+        infoWindow.className = 'chat-window group-info-window';
+        infoWindow.style.display = 'block';
+        infoWindow.style.right = '340px';
+        infoWindow.style.zIndex = '1001';
+
+        const groupRef = db.ref(`groups/${groupId}`);
+        const groupSnapshot = await groupRef.once('value');
+        const group = groupSnapshot.val();
+        const members = group.members ? Object.keys(group.members) : [];
+
+        const creatorData = await getUserData(createdBy);
+        const creatorName = creatorData.displayName || creatorData.email;
+
+        let membersHtml = '';
+        for (const memberId of members) {
+            const memberData = await getUserData(memberId);
+            const memberName = memberData.displayName || memberData.email;
+            membersHtml += `
+                <div class="member-item">
+                    <span>${memberName}</span>
+                    ${isCreator && memberId !== currentUser.uid ? `<button class="remove-member-btn" data-member-id="${memberId}">Xóa</button>` : ''}
+                </div>
+            `;
+        }
+
+        let buttonsHtml = '';
+        if (isCreator) {
+            buttonsHtml = `
+                <button id="add-member-btn" style="color: black;">Thêm thành viên</button>
+                <button id="rename-group-btn" style="color: black;">Đổi tên nhóm</button>
+                <button id="dissolve-group-btn" style="color: black;">Giải tán nhóm</button>
+            `;
+        } else {
+            buttonsHtml = `
+                <button id="add-member-btn">Thêm người</button>
+                <button id="leave-group-btn">Rời nhóm</button>
+            `;
+        }
+
+        infoWindow.innerHTML = `
+            <div class="chat-header">
+                <span>Thông tin nhóm: ${groupName}</span>
+                <button class="close-chat-window"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="group-info-body" style="color: black;">
+                <p><strong>Người tạo:</strong> ${creatorName}</p>
+                <p><strong>Số lượng thành viên:</strong> ${members.length}</p>
+                <button id="toggle-members-btn" style="color: black;">Xem thành viên</button>
+                <hr>
+                <div class="member-list" style="display: none;">
+                    <h5>Thành viên</h5>
+                    ${membersHtml}
+                </div>
+                <hr>
+                ${buttonsHtml}
+            </div>
+        `;
+
+        document.body.appendChild(infoWindow);
+
+        infoWindow.querySelector('#toggle-members-btn').addEventListener('click', () => {
+            const memberList = infoWindow.querySelector('.member-list');
+            memberList.style.display = memberList.style.display === 'none' ? 'block' : 'none';
+        });
+
+        infoWindow.querySelector('.close-chat-window').addEventListener('click', () => {
+            infoWindow.remove();
+        });
+
+        infoWindow.querySelectorAll('.remove-member-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const memberId = e.target.dataset.memberId;
+                if (confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi nhóm không?')) {
+                    db.ref(`groups/${groupId}/members/${memberId}`).remove();
+                    db.ref(`users/${memberId}/groups/${groupId}`).remove();
+                    openGroupInfoModal(groupId, groupName, createdBy); // Refresh the modal
+                }
+            });
+        });
+
+        if (isCreator) {
+            infoWindow.querySelector('#add-member-btn').addEventListener('click', () => {
+                openUserSelectionModal(groupId);
+                infoWindow.remove();
+            });
+
+            infoWindow.querySelector('#rename-group-btn').addEventListener('click', () => {
+                const newName = prompt('Nhập tên nhóm mới:');
+                if (newName) {
+                    db.ref(`groups/${groupId}/name`).set(newName);
+                }
+                infoWindow.remove();
+            });
+
+            infoWindow.querySelector('#dissolve-group-btn').addEventListener('click', () => {
+                if (confirm('Bạn có chắc chắn muốn giải tán nhóm này không?')) {
+                    db.ref(`groups/${groupId}`).remove();
+                    db.ref(`users`).orderByChild(`groups/${groupId}`).equalTo(true).once('value', snapshot => {
+                        snapshot.forEach(childSnapshot => {
+                            db.ref(`users/${childSnapshot.key}/groups/${groupId}`).remove();
+                        });
+                    });
+                }
+                infoWindow.remove();
+            });
+        } else {
+            infoWindow.querySelector('#add-member-btn').addEventListener('click', () => {
+                openUserSelectionModal(groupId);
+                infoWindow.remove();
+            });
+
+            infoWindow.querySelector('#leave-group-btn').addEventListener('click', () => {
+                if (confirm('Bạn có chắc chắn muốn rời khỏi nhóm này không?')) {
+                    db.ref(`groups/${groupId}/members/${currentUser.uid}`).remove();
+                    db.ref(`users/${currentUser.uid}/groups/${groupId}`).remove();
+                }
+                infoWindow.remove();
+            });
+        }
+    }
+
+    function openUserSelectionModal(groupId) {
+        const userSelectionWindow = document.createElement('div');
+        userSelectionWindow.className = 'chat-window';
+        userSelectionWindow.style.display = 'block';
+        userSelectionWindow.innerHTML = `
+            <div class="chat-header">
+                <span>Thêm thành viên</span>
+                <button class="close-chat-window"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="user-selection-list"></div>
+            <button id="add-selected-users-btn">Thêm</button>
+        `;
+        document.body.appendChild(userSelectionWindow);
+
+        const userSelectionList = userSelectionWindow.querySelector('#user-selection-list');
+
+        const usersRef = db.ref('users');
+        usersRef.once('value', snapshot => {
+            snapshot.forEach(childSnapshot => {
+                const user = childSnapshot.val();
+                const userId = childSnapshot.key;
+                if (userId !== currentUser.uid) {
+                    const userElement = document.createElement('div');
+                    userElement.innerHTML = `
+                        <input type="checkbox" id="${userId}" value="${userId}">
+                        <label for="${userId}">${user.displayName || user.email}</label>
+                    `;
+                    userSelectionList.appendChild(userElement);
+                }
+            });
+        });
+
+        userSelectionWindow.querySelector('.close-chat-window').addEventListener('click', () => {
+            userSelectionWindow.remove();
+        });
+
+        userSelectionWindow.querySelector('#add-selected-users-btn').addEventListener('click', () => {
+            const selectedUsers = Array.from(userSelectionList.querySelectorAll('input:checked')).map(input => input.value);
+            if (selectedUsers.length > 0) {
+                const groupMembersRef = db.ref(`groups/${groupId}/members`);
+                selectedUsers.forEach(userId => {
+                    groupMembersRef.child(userId).set(true);
+                    db.ref(`users/${userId}/groups/${groupId}`).set(true);
+                });
+                userSelectionWindow.remove();
             }
         });
     }
@@ -271,7 +704,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function openChatWindow(chatId, chatName, isGroup) {
+    async function openChatWindow(options) {
+        const { id: chatId, name: chatName, isGroup, avatarUrl } = options;
         // Reset unread count when opening window
         const unreadRef = db.ref(`unread-counts/${currentUser.uid}/${chatId}`);
         unreadRef.set(0);
@@ -299,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatWindow.innerHTML = `
             <div class="chat-window-header">
                 <div class="chat-header-info">
-                    <img src="${isGroup ? defaultGroupAvatars[chatId] || `https://i.pravatar.cc/30?u=${chatId}` : (await getUserData(chatId.replace(currentUser.uid, '').replace('_', ''))).photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar" class="chat-avatar" data-uid="${isGroup ? '' : chatId.replace(currentUser.uid, '').replace('_', '')}">
+                    <img src="${isGroup ? avatarUrl || defaultGroupAvatars[chatId] || `https://i.pravatar.cc/30?u=${chatId}` : (await getUserData(chatId.replace(currentUser.uid, '').replace('_', ''))).photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar" class="chat-avatar" data-uid="${isGroup ? '' : chatId.replace(currentUser.uid, '').replace('_', '')}">
                     <div>
                         <span class="chat-username" data-uid="${isGroup ? '' : chatId.replace(currentUser.uid, '').replace('_', '')}">${chatName}</span>
                         <span class="chat-status"></span>

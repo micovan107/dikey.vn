@@ -20,24 +20,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 const today = new Date().toDateString();
                 const lastLoginDate = lastLogin ? new Date(lastLogin).toDateString() : null;
 
-                let currentCoins = userData.coins || userData.xu || 0;
-
-                const updates = {};
-                if (userData.hasOwnProperty('xu')) {
-                    updates.xu = null;
-                }
+                let currentXu = userData.xu || 0;
 
                 if (lastLoginDate !== today) {
-                    currentCoins += 100;
-                    updates.lastLogin = firebase.database.ServerValue.TIMESTAMP;
-                    updates.coins = currentCoins;
-                    userRef.update(updates).then(() => {
+                    currentXu += 100;
+                    userRef.update({
+                        lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                        xu: currentXu
+                    }).then(() => {
                         alert("Bạn đã được tặng 100 xu vì đăng nhập ngày hôm nay!");
                     });
                 } else {
-                    updates.lastLogin = firebase.database.ServerValue.TIMESTAMP;
-                    updates.coins = currentCoins;
-                    userRef.update(updates);
+                    userRef.update({
+                        lastLogin: firebase.database.ServerValue.TIMESTAMP
+                    });
                 }
             });
 
@@ -172,7 +168,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-});
 
     const googleSignInBtn = document.getElementById('google-signin-btn');
     if (googleSignInBtn) {
@@ -180,22 +175,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider)
                 .then((result) => {
-                    // This gives you a Google Access Token. You can use it to access the Google API.
-                    const credential = result.credential;
-                    const token = credential.accessToken;
-                    // The signed-in user info.
-                    const user = result.user;
                     window.location.href = 'index.html';
                 }).catch((error) => {
-                    // Handle Errors here.
-                    const errorCode = error.code;
-                    const errorMessage = error.message;
-                    // The email of the user's account used.
-                    const email = error.email;
-                    // The firebase.auth.AuthCredential type that was used.
-                    const credential = error.credential;
-                    console.error("Google Sign-In Error:", errorMessage);
-                    alert("Đăng nhập với Google thất bại: " + errorMessage);
+                    console.error("Google Sign-In Error:", error.message);
+                    alert("Đăng nhập với Google thất bại: " + error.message);
                 });
         });
     }
+});

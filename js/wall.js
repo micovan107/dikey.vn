@@ -577,10 +577,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (confirmation) {
                         const userGiftRef = firebase.database().ref(`users/${userId}/gifts/${giftId}`);
-                        const userCoinsRef = firebase.database().ref(`users/${userId}/coins`);
+                        const userXuRef = firebase.database().ref(`users/${userId}/xu`);
 
-                        userCoinsRef.transaction((currentCoins) => {
-                            return (currentCoins || 0) + price;
+                        userXuRef.transaction((currentXu) => {
+                            return (currentXu || 0) + price;
                         });
 
                         if (quantity > 1) {

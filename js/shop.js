@@ -57,41 +57,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handlePurchase(user, item) {
         const userRef = db.ref('users/' + user.uid);
-        userRef.once('value').then(snapshot => {
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
-                const userCoins = userData.coins || 0;
+        userRef.transaction(userData => {
+            if (userData) {
+                const userXu = userData.xu || 0;
 
-                if (userCoins >= item.price) {
-                    const newCoins = userCoins - item.price;
-                    const giftsRef = userRef.child('gifts');
+                if (userXu >= item.price) {
+                    userData.xu = userXu - item.price;
 
-                    giftsRef.orderByChild('itemId').equalTo(item.id).once('value', giftSnapshot => {
-                        if (giftSnapshot.exists()) {
-                            const giftKey = Object.keys(giftSnapshot.val())[0];
-                            const existingGift = giftSnapshot.val()[giftKey];
-                            const newQuantity = (existingGift.quantity || 1) + 1;
-                            giftsRef.child(giftKey).update({ quantity: newQuantity });
-                        } else {
-                            const newGiftRef = giftsRef.push();
-                            newGiftRef.set({
-                                itemId: item.id,
-                                itemName: item.name,
-                                itemImage: item.image,
-                                price: item.price,
-                                quantity: 1,
-                                purchaseDate: firebase.database.ServerValue.TIMESTAMP
-                            });
-                        }
-                        userRef.child('coins').set(newCoins);
-                        alert(`Bạn đã mua thành công ${item.name}!`);
-                    });
+                    if (!userData.gifts) {
+                        userData.gifts = {};
+                    }
+
+                    const giftKey = Object.keys(userData.gifts).find(key => userData.gifts[key].itemId === item.id);
+
+                    if (giftKey) {
+                        userData.gifts[giftKey].quantity = (userData.gifts[giftKey].quantity || 1) + 1;
+                    } else {
+                        const newGiftKey = db.ref('users/' + user.uid + '/gifts').push().key;
+                        userData.gifts[newGiftKey] = {
+                            itemId: item.id,
+                            itemName: item.name,
+                            itemImage: item.image,
+                            price: item.price,
+                            quantity: 1,
+                            purchaseDate: firebase.database.ServerValue.TIMESTAMP
+                        };
+                    }
+                    alert(`Bạn đã mua thành công ${item.name}!`);
                 } else {
                     alert('Bạn không đủ xu để mua vật phẩm này.');
                 }
-            } else {
-                alert('Không tìm thấy thông tin người dùng.');
             }
+            return userData;
         });
     }
 });
