@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tặng Xu</title>
+    <link rel="stylesheet" href="css/gift-xu.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Tặng Xu</h1>
+        <div class="form-group">
+            <label for="recipient">Người nhận:</label>
+            <input type="text" id="recipient" placeholder="Tìm kiếm người dùng...">
+            <div id="user-search-results"></div>
+        </div>
+        <div class="form-group">
+            <label for="amount">Số xu:</label>
+            <input type="number" id="amount" placeholder="Nhập số xu muốn tặng">
+        </div>
+        <div class="form-group">
+            <label for="message">Lời nhắn:</label>
+            <textarea id="message" placeholder="Nhập lời nhắn"></textarea>
+        </div>
+        <button id="gift-button">Tặng</button>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/gift-xu.js"></script>
+</body>
+</html>
