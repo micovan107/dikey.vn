@@ -7,6 +7,36 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
+    <style>
+        @media (max-width: 768px) {
+            .left-sidebar,
+            .right-sidebar {
+                display: none;
+            }
+            .main-container {
+                display: block;
+                padding: 0 !important;
+            }
+            .main-content {
+                padding: 0 15px;
+            }
+            #posts-container {
+                padding: 0;
+            }
+            header h1 {
+                font-size: 1.25rem;
+            }
+            nav#nav-links a,
+            nav#nav-links button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .nav-avatar {
+                width: 28px;
+                height: 28px;
+            }
+        }
+    </style>
 <body>
     <script src="js/header.js"></script>
 

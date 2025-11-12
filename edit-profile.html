@@ -7,6 +7,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
+    <style>
+        @media (max-width: 768px) {
+            .left-sidebar,
+            .right-sidebar {
+                display: none;
+            }
+            .main-container {
+                display: block;
+                padding: 0 !important;
+            }
+            .main-content {
+                padding: 0 15px;
+            }
+            #posts-container {
+                padding: 0;
+            }
+            header h1 {
+                font-size: 1.25rem;
+            }
+            nav#nav-links a,
+            nav#nav-links button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .nav-avatar {
+                width: 28px;
+                height: 28px;
+            }
+        }
+    </style>
 <body>
     <script src="js/header.js"></script>
 
@@ -41,6 +71,51 @@
     <script src="js/auth.js"></script>
     <script src="js/edit-profile.js"></script>
     <script src="js/chat_dikey.js"></script>
-    <div id="chat-container"></div>
+        <div id="chat-container" class="chat-container-dikey">
+    <div id="chat-icon" class="chat-icon-dikey">
+        <i class="fas fa-comments"></i>
+        <span id="chat-unread-total" class="unread-count-total"></span>
+    </div>
+    <div id="chat-window" class="chat-window-dikey">
+        <div class="chat-header-dikey">
+            <h3>Tin nhắn</h3>
+            <button id="close-chat-btn">&times;</button>
+        </div>
+        <div class="chat-body-dikey">
+            <div id="chat-user-list" class="chat-user-list-dikey">
+                <!-- User list will be loaded here -->
+            </div>
+            <div id="chat-main" class="chat-main-dikey">
+                <div id="chat-main-header" class="chat-main-header-dikey">
+                    <!-- Active chat user info will be here -->
+                </div>
+                <div id="chat-messages" class="chat-messages-dikey">
+                    <!-- Messages will be loaded here -->
+                </div>
+                 <div id="reply-preview-container" class="reply-preview-container-dikey" style="display: none;">
+                    <div class="reply-preview-content">
+                        <div id="reply-preview-text"></div>
+                    </div>
+                    <button id="cancel-reply-btn">&times;</button>
+                </div>
+                <div class="chat-input-dikey">
+                    <input type="text" id="message-input" placeholder="Nhập tin nhắn...">
+                    <button id="send-message-btn"><i class="fas fa-paper-plane"></i></button>
+                     <button id="chat-bg-btn"><i class="fas fa-image"></i></button>
+                </div>
+            </div>
+        </div>
+        <div id="chat-background-selector" class="chat-background-selector-dikey" style="display: none;">
+            <h5>Chọn nền</h5>
+            <div class="background-options">
+                <img src="nen1.png" data-bg="nen1.png" class="selected">
+                <img src="nen2.png" data-bg="nen2.png">
+                <img src="nen3.png" data-bg="nen3.png">
+                <img src="nen4.png" data-bg="nen4.png">
+            </div>
+            <input type="file" id="background-upload" accept="image/*">
+        </div>
+    </div>
+</div>
 </body>
 </html>
