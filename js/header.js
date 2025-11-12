@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a href="create-quiz.html">Tạo trắc nghiệm</a>
                     <a href="quiz-list.html">Khảo sát</a>
                     <a href="shop.html">Cửa hàng</a>
+                    <a href="gift-xu.html">Tặng Xu</a>
                 </nav>
             </div>
         </header>

@@ -48,6 +48,27 @@ document.addEventListener('DOMContentLoaded', function() {
         loadGifts(profileUserId);
         setupActionButtons(profileUserId);
         setupTabs();
+
+        const giftCoinsBtn = document.getElementById('gift-coins-btn');
+        if (giftCoinsBtn) {
+            giftCoinsBtn.addEventListener('click', function(e) {
+                e.preventDefault(); 
+                if (viewedUserId) {
+                    const userRef = db.ref(`users/${viewedUserId}`);
+                    userRef.once('value', (snapshot) => {
+                        const userData = snapshot.val();
+                        if (userData && userData.displayName) {
+                            const recipientName = encodeURIComponent(userData.displayName);
+                            window.location.href = `gift-xu.html?recipientId=${viewedUserId}&recipientName=${recipientName}`;
+                        } else {
+                             window.location.href = 'gift-xu.html';
+                        }
+                    });
+                } else {
+                    window.location.href = 'gift-xu.html';
+                }
+            });
+        }
     });
 
     // --- Data Loading Functions ---
