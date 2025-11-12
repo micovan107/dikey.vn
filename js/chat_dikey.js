@@ -54,7 +54,76 @@ document.addEventListener('DOMContentLoaded', () => {
             cursor: pointer;
         }
     `;
+
+    // Thêm CSS cho chế độ điện thoại
+    if (window.innerWidth <= 768) {
+        style.textContent += `
+            .sub-header {
+                background-color: #fff;
+                padding: 10px;
+                text-align: center;
+                border-bottom: 1px solid #ddd;
+            }
+
+            #open-chat-mobile-btn {
+                background-color: #1877f2;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+
+            .chat-widget {
+                display: none; /* Hide by default on mobile */
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 2000;
+                flex-direction: column;
+                background-color: #fff; /* Add background for the full-screen widget */
+            }
+
+            .chat-widget.mobile-open {
+                display: flex !important; /* Show when open */
+            }
+
+         .chat-list-container {
+                height: 100%;
+                flex-grow: 1;
+                overflow-y: auto;
+            }
+            .chat-header {
+                flex-shrink: 0;
+            }
+
+            .chat-window {
+                width: 100% !important;
+                height: 100% !important;
+                bottom: 0 !important;
+                right: 0 !important;
+                position: fixed !important;
+                z-index: 2001 !important;
+            }
+        `;
+    }
     document.head.appendChild(style);
+
+    document.body.addEventListener('click', event => {
+        if (event.target.matches('#open-chat-mobile-btn')) {
+            const chatWidget = document.querySelector('.chat-widget');
+            const chatListContainer = document.querySelector('.chat-list-container');
+            if (chatWidget) {
+                chatWidget.classList.add('mobile-open');
+            }
+            if (chatListContainer) {
+                chatListContainer.classList.add('open');
+            }
+        }
+    });
 
     let currentUser;
     let openChatWindows = [];
@@ -81,6 +150,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     presenceRef.set('online');
                 }
             });
+
+            if (window.innerWidth <= 768) {
+                const mainHeader = document.querySelector('header');
+                if (mainHeader) {
+                    const subHeader = document.createElement('div');
+                    subHeader.className = 'sub-header';
+                    subHeader.innerHTML = '<button id="open-chat-mobile-btn">Mở Chat</button>';
+                    mainHeader.insertAdjacentElement('afterend', subHeader);
+
+                    document.getElementById('open-chat-mobile-btn').addEventListener('click', () => {
+                        const chatWidget = document.querySelector('.chat-widget');
+                        if (chatWidget) {
+                            chatWidget.classList.add('mobile-open');
+                        }
+                    });
+                }
+            }
 
             chatContainer.innerHTML = `
                 <div class="chat-widget">
@@ -112,16 +198,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const chatListContainer = document.querySelector('.chat-list-container');
 
             chatHeader.addEventListener('click', () => {
-                chatListContainer.classList.toggle('open');
-                toggleButton.querySelector('i').classList.toggle('fa-chevron-up');
-                toggleButton.querySelector('i').classList.toggle('fa-chevron-down');
+                const chatWidget = document.querySelector('.chat-widget');
+                if (window.innerWidth <= 768) {
+                    // On mobile, the header click should not close the widget.
+                    // Let the dedicated close button handle that.
+                    // This click will toggle the list visibility on desktop.
+                } else {
+                    chatListContainer.classList.toggle('open');
+                    toggleButton.querySelector('i').classList.toggle('fa-chevron-up');
+                    toggleButton.querySelector('i').classList.toggle('fa-chevron-down');
+                }
             });
 
             const closeWidgetButton = document.getElementById('close-chat-widget');
             const chatWidget = document.querySelector('.chat-widget');
 
             closeWidgetButton.addEventListener('click', () => {
-                chatWidget.style.display = 'none';
+                if (window.innerWidth <= 768) {
+                    chatWidget.classList.remove('mobile-open');
+                } else {
+                    chatWidget.style.display = 'none';
+                }
             });
 
             const searchInput = document.getElementById('chat-user-search');
