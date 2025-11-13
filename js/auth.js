@@ -59,7 +59,6 @@ document.addEventListener("DOMContentLoaded", () => {
                              <a href="dikeygo.html">Chia sẻ hằng ngày</a>
                               <a href="shop.html">Quà ảo</a>
                                <a href="budget.html">Ngân sách</a>
-                               <a href="friend.html">Bạn bè</a>
                                <a href="#" id="logout-button">Đăng xuất</a>
                         </div>
                     </div>
@@ -190,5 +189,4 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         });
     }
-
 });
