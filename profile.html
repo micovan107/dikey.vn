@@ -3,20 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hồ sơ của tôi</title>
+    <title>Tường Nhà - Dikey.vn</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/rating.css">
+    <link rel="stylesheet" href="css/wall.css">
 </head>
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 0;
+            }
+            .left-sidebar,
+            .right-sidebar {
+                display: none;
+            }
+            .main-container {
+                display: block;
+                padding: 0 !important;
+            }
+            .main-content {
+                padding: 0 15px;
+            }
+            #posts-container {
+                padding: 0;
+            }
+            header h1 {
+                font-size: 1.25rem;
+            }
+            nav#nav-links a,
+            nav#nav-links button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .nav-avatar {
+                width: 28px;
+                height: 28px;
+            }
+            #profile-container {
+                width: 100%;
+                padding: 10px;
+                box-sizing: border-box;
+            }
+            .profile-header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            #profile-avatar {
+                width: 100px;
+                height: 100px;
+            }
+            #profile-name {
+                font-size: 1.5rem;
+                word-wrap: break-word;
+            }
+            .profile-info p {
+                word-wrap: break-word;
+            }
+            .profile-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .profile-actions .btn {
+                margin: 5px;
+            }
+                        .nav-user-name {
+    display: none !important;
+  }
+  .nav-user-profile .dropdown-content {
+    right: 0;
+    left: auto;
+  }
+        }
+    </style>
 <body>
-    <header>
-        <div class="container">
-            <h1><a href="index.html">Diễn đàn học tập</a></h1>
-            <button id="menu-toggle" class="menu-toggle" aria-label="Mở menu">☰</button>
-            <nav id="nav-links">
-                <!-- Các liên kết sẽ được thêm bằng JavaScript -->
-            </nav>
-        </div>
-    </header>
+    <script src="js/header.js"></script>
 
     <main class="container">
         <div id="profile-container">
@@ -29,19 +93,24 @@
                     <div class="profile-actions">
                         <button class="btn" id="add-friend-btn"><i class="fas fa-user-plus"></i> Kết bạn</button>
                         <button class="btn" id="follow-btn"><i class="fas fa-rss"></i> Theo dõi</button>
-                        <button class="btn" id="rate-btn"><i class="fas fa-star"></i> Đánh giá</button>
+                        <div id="rating-section"></div>
+                        <a href="#" class="btn" id="gift-coins-btn"><i class="fas fa-coins"></i> Tặng xu</a>
                     </div>
                     <a href="edit-profile.html" class="btn">Chỉnh sửa hồ sơ</a>
                 </div>
             </div>
 
-            <div class="profile-tabs">
-                <button class="tab-link active" data-tab="posts">Bài đăng</button>
-                <button class="tab-link" data-tab="achievements">Thành tích</button>
+            <div id="wall-posts" class="tab-content active">
+                <h3>Tường nhà</h3>
+                <a href="post-wall.html" class="btn"><i class="fas fa-plus"></i> Đăng bài viết</a>
+                <div id="gifts-list" class="row"></div>
+                <div id="wall-posts-container">
+                    <!-- Các bài đăng trên tường sẽ được tải vào đây -->
+                </div>
             </div>
 
-            <div id="posts" class="tab-content active">
-                <h3>Bài đăng của tôi</h3>
+            <div id="forum-posts" class="tab-content">
+                <h3>Bài đăng diễn đàn</h3>
                 <div id="user-posts-list">
                     <!-- Danh sách bài đăng của người dùng sẽ được tải vào đây -->
                 </div>
@@ -53,12 +122,28 @@
                     <!-- Danh sách thành tích sẽ được tải vào đây -->
                 </div>
             </div>
+
+            <div id="friends" class="tab-content">
+                <h3>Bạn bè</h3>
+                <div id="friends-list">
+                    <!-- Danh sách bạn bè sẽ được tải vào đây -->
+                </div>
+            </div>
+
+            <div id="followers" class="tab-content">
+                <h3>Người theo dõi</h3>
+                <div id="followers-list">
+                    <!-- Danh sách người theo dõi sẽ được tải vào đây -->
+                </div>
+            </div>
+
+
         </div>
     </main>
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 Diễn đàn học tập</p>
+            <p>&copy; 2025 dikey.vn</p>
         </div>
     </footer>
 
@@ -66,11 +151,59 @@
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
 
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/profile.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="js/codexworld-rating.js"></script>
+    <script src="js/wall.js"></script>
     <script src="js/chat_dikey.js"></script>
-    <div id="chat-container"></div>
+        <div id="chat-container" class="chat-container-dikey">
+    <div id="chat-icon" class="chat-icon-dikey">
+        <i class="fas fa-comments"></i>
+        <span id="chat-unread-total" class="unread-count-total"></span>
+    </div>
+    <div id="chat-window" class="chat-window-dikey">
+        <div class="chat-header-dikey">
+            <h3>Tin nhắn</h3>
+            <button id="close-chat-btn">&times;</button>
+        </div>
+        <div class="chat-body-dikey">
+            <div id="chat-user-list" class="chat-user-list-dikey">
+                <!-- User list will be loaded here -->
+            </div>
+            <div id="chat-main" class="chat-main-dikey">
+                <div id="chat-main-header" class="chat-main-header-dikey">
+                    <!-- Active chat user info will be here -->
+                </div>
+                <div id="chat-messages" class="chat-messages-dikey">
+                    <!-- Messages will be loaded here -->
+                </div>
+                 <div id="reply-preview-container" class="reply-preview-container-dikey" style="display: none;">
+                    <div class="reply-preview-content">
+                        <div id="reply-preview-text"></div>
+                    </div>
+                    <button id="cancel-reply-btn">&times;</button>
+                </div>
+                <div class="chat-input-dikey">
+                    <input type="text" id="message-input" placeholder="Nhập tin nhắn...">
+                    <button id="send-message-btn"><i class="fas fa-paper-plane"></i></button>
+                     <button id="chat-bg-btn"><i class="fas fa-image"></i></button>
+                </div>
+            </div>
+        </div>
+        <div id="chat-background-selector" class="chat-background-selector-dikey" style="display: none;">
+            <h5>Chọn nền</h5>
+            <div class="background-options">
+                <img src="nen1.png" data-bg="nen1.png" class="selected">
+                <img src="nen2.png" data-bg="nen2.png">
+                <img src="nen3.png" data-bg="nen3.png">
+                <img src="nen4.png" data-bg="nen4.png">
+            </div>
+            <input type="file" id="background-upload" accept="image/*">
+        </div>
+    </div>
+</div>
 </body>
 </html>

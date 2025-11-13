@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Lời Giải - dikey.vn</title>
+    <title>Bạn bè - Dikey.vn</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/friend.css">
 </head>
     <style>
         @media (max-width: 768px) {
@@ -47,53 +48,53 @@
 <body>
     <script src="js/header.js"></script>
 
-    <main>
-        <div class="form-container">
-            <h2>Đăng Lời Giải</h2>
-            <div id="original-post-container"></div>
-            <hr>
-            <div class="math-symbols">
-                <p>Ký hiệu toán học:</p>
-                <button class="symbol">α</button>
-                <button class="symbol">β</button>
-                <button class="symbol">γ</button>
-                <button class="symbol">δ</button>
-                <button class="symbol">∞</button>
-                <button class="symbol">≠</button>
-                <button class="symbol">±</button>
-                <button class="symbol">≈</button>
-                <button class="symbol">√</button>
-                <button class="symbol">∫</button>
-                <button class="symbol">∑</button>
-                <button class="symbol">→</button>
+    <main class="container">
+        <div class="friends-container">
+            <div class="menu-icon">&#9776;</div>
+            <h1>Quản lý bạn bè</h1>
+
+            <div class="tabs">
+                <button class="tab-link active" data-tab="friend-requests">Lời mời kết bạn</button>
+                <button class="tab-link" data-tab="friends">Bạn bè</button>
+                <button class="tab-link" data-tab="following">Đang theo dõi</button>
+                <button class="tab-link" data-tab="followers">Người theo dõi</button>
             </div>
-            <form id="solution-form">
-                <div class="form-group">
-                    <label for="solution-text">Lời giải của bạn</label>
-                    <textarea id="solution-text" rows="5" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="solution-image">Tải lên hình ảnh (tùy chọn)</label>
-                    <input type="file" id="solution-image" accept="image/*">
-                    <div id="image-preview"></div>
-                </div>
-                <button type="submit" class="btn btn-primary">Gửi Lời Giải</button>
-            </form>
+
+            <div id="friend-requests" class="tab-content active">
+                <h2>Lời mời kết bạn</h2>
+                <div id="friend-requests-list" class="user-list"></div>
+            </div>
+
+            <div id="friends" class="tab-content">
+                <h2>Bạn bè</h2>
+                <div id="friends-list" class="user-list"></div>
+            </div>
+
+            <div id="following" class="tab-content">
+                <h2>Đang theo dõi</h2>
+                <div id="following-list" class="user-list"></div>
+            </div>
+
+            <div id="followers" class="tab-content">
+                <h2>Người theo dõi</h2>
+                <div id="followers-list" class="user-list"></div>
+            </div>
         </div>
     </main>
 
     <footer>
-        <p>&copy; 2025 dikey.vn</p>
+        <div class="container">
+            <p>&copy; 2025 dikey.vn</p>
+        </div>
     </footer>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
 
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/post-solution.js"></script>
+    <script src="js/friend.js"></script>
 </body>
 </html>

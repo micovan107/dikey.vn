@@ -3,24 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang Chủ - dikey.vn</title>
-    <link rel="shortcut icon" href="./favicon.png" type="image/png">
-    <meta property="og:title" content="Dikey.vn - Rèn đức, luyện tài vì ngày mai lập nghiệp">
-<meta property="og:description" content="Cộng đồng học tập, chia sẻ bài tập và luyện thi.">
-<meta property="og:image" content="https://micovan107.github.io/dikey.vn/favicon.png">
-<meta property="og:url" content="https://micovan107.github.io/dikey.vn/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Dikey.vn">
-
-<!-- Twitter / Telegram / Discord card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Dikey.vn - Rèn đức, luyện tài vì ngày mai lập nghiệp">
-<meta name="twitter:description" content="Cộng đồng học tập, chia sẻ bài tập và luyện thi.">
-<meta name="twitter:image" content="https://micovan107.github.io/dikey.vn/favicon.png">
+    <title>DikeyGo - Chia sẻ hằng ngày</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/wall.css">
     <style>
         @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 0;
+            }
+            #wall-posts-container {
+                padding: 10px;
+                box-sizing: border-box;
+            }
             .left-sidebar,
             .right-sidebar {
                 display: none;
@@ -59,53 +55,34 @@
 </head>
 <body>
     <script src="js/header.js"></script>
-    <script src="js/auth.js"></script>
 
-    <div class="main-container">
-        <aside class="sidebar left-sidebar">
-            <h3>Phân Loại Môn Học</h3>
-            <ul class="category-list">
-                <!-- Danh sách môn học sẽ được tải vào đây -->
-            </ul>
-        </aside>
-
-        <main class="main-content">
-            <div class="welcome-section">
-                
-                <h2>Rèn đức, luyện tài vì ngày mai lập nghiệp</h2>
-                <p>Bạn muốn biết điều gì? <a href="post.html" class="btn">Đăng bài</a></p>
+    <main class="container">
+        <div id="wall-posts" class="tab-content active">
+            <h3>Tất cả bài đăng</h3>
+            <div id="wall-posts-container">
                 
             </div>
-            <h2>Các Bài Tập Mới Nhất</h2>
-            <div id="posts-container">
-                <!-- Các bài tập sẽ được tải vào đây bằng JavaScript -->
-            </div>
-        </main>
-
-        <aside class="sidebar right-sidebar">
-            <h3>Bảng Xếp Hạng</h3>
-            <ul class="ranking-list">
-                <!-- Bảng xếp hạng sẽ được tải vào đây -->
-            </ul>
-        </aside>
-        
-    </div>
-
+        </div>
+    </main>
 
     <footer>
-        <p>&copy; 2025 dikey.vn</p>
+        <div class="container">
+            <p>&copy; 2025 dikey.vn</p>
+        </div>
     </footer>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
 
-    <!-- Your Scripts -->
     <script src="js/firebase-config.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/subjects.js"></script>
+    <script src="js/dikeygo.js"></script>
+
+
+
     <script src="js/chat_dikey.js"></script>
     <div id="chat-container" class="chat-container-dikey">
     <div id="chat-icon" class="chat-icon-dikey">
@@ -153,5 +130,6 @@
         </div>
     </div>
 </div>
+
 </body>
 </html>
