@@ -1,0 +1,24 @@
+name: Deploy Firebase posts as static HTML
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+    - run: npm install node-fetch@2
+    - run: node generate-posts.js
+    - name: Commit generated files
+      run: |
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+        git add generated/*
+        git commit -m "Auto-generate posts HTML" || echo "No changes"
+        git push origin main
+        
