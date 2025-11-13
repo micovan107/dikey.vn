@@ -81,7 +81,52 @@
     <script src="js/auth.js"></script>
     <script src="js/post-wall.js"></script>
     <script src="js/chat_dikey.js"></script>
-    <div id="chat-container"></div>
+        <div id="chat-container" class="chat-container-dikey">
+    <div id="chat-icon" class="chat-icon-dikey">
+        <i class="fas fa-comments"></i>
+        <span id="chat-unread-total" class="unread-count-total"></span>
+    </div>
+    <div id="chat-window" class="chat-window-dikey">
+        <div class="chat-header-dikey">
+            <h3>Tin nhắn</h3>
+            <button id="close-chat-btn">&times;</button>
+        </div>
+        <div class="chat-body-dikey">
+            <div id="chat-user-list" class="chat-user-list-dikey">
+                <!-- User list will be loaded here -->
+            </div>
+            <div id="chat-main" class="chat-main-dikey">
+                <div id="chat-main-header" class="chat-main-header-dikey">
+                    <!-- Active chat user info will be here -->
+                </div>
+                <div id="chat-messages" class="chat-messages-dikey">
+                    <!-- Messages will be loaded here -->
+                </div>
+                 <div id="reply-preview-container" class="reply-preview-container-dikey" style="display: none;">
+                    <div class="reply-preview-content">
+                        <div id="reply-preview-text"></div>
+                    </div>
+                    <button id="cancel-reply-btn">&times;</button>
+                </div>
+                <div class="chat-input-dikey">
+                    <input type="text" id="message-input" placeholder="Nhập tin nhắn...">
+                    <button id="send-message-btn"><i class="fas fa-paper-plane"></i></button>
+                     <button id="chat-bg-btn"><i class="fas fa-image"></i></button>
+                </div>
+            </div>
+        </div>
+        <div id="chat-background-selector" class="chat-background-selector-dikey" style="display: none;">
+            <h5>Chọn nền</h5>
+            <div class="background-options">
+                <img src="nen1.png" data-bg="nen1.png" class="selected">
+                <img src="nen2.png" data-bg="nen2.png">
+                <img src="nen3.png" data-bg="nen3.png">
+                <img src="nen4.png" data-bg="nen4.png">
+            </div>
+            <input type="file" id="background-upload" accept="image/*">
+        </div>
+    </div>
 </body>
 
 </html>
+
