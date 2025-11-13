@@ -1,0 +1,110 @@
+.friends-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+
+.tab-link {
+    background: none;
+    border: none;
+    padding: 15px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.tab-link.active {
+    border-bottom: 2px solid #007bff;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.user-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.user-item img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.user-info a {
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+}
+
+.user-actions button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.user-actions button.accept-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.user-actions button.reject-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.menu-icon {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .tabs {
+        flex-direction: column;
+        display: none; /* Hide by default on mobile */
+    }
+
+    .tabs.active {
+        display: flex; /* Show when active */
+    }
+
+    .tab-link {
+        text-align: left;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .tab-content.active {
+        display: block !important; /* Show only active content */
+    }
+
+    .menu-icon {
+        display: block; /* Show hamburger icon on mobile */
+    }
+}

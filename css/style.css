@@ -1347,6 +1347,11 @@ footer {
     cursor: pointer;
 }
 
+.notification-modal-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
 .notification-item {
     padding: 10px;
     border-bottom: 1px solid #eee;
@@ -1802,10 +1807,26 @@ footer {
 }
 
 .lzc_count_msg {
+    
     background-color: red;
     color: white;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 0.8em;
+    border-radius: 30%;
+    padding: 0px 5.6px;
+    font-size: 0.1em;
     margin-left: auto;
+}
+
+#message-btn {
+    background-color: #0084ff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#message-btn:hover {
+    background-color: #0073e6;
 }
