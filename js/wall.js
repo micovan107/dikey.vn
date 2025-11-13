@@ -325,6 +325,21 @@ document.addEventListener('DOMContentLoaded', function() {
             setupFriendButton(profileUserId);
             setupRating(profileUserId);
             setupGiftCoinsButton(profileUserId);
+
+            // Add Message Button
+            const messageBtn = document.createElement('button');
+            messageBtn.id = 'message-btn';
+            messageBtn.innerHTML = '<i class="fas fa-comment"></i> Nhắn tin';
+            profileActions.appendChild(messageBtn);
+
+            messageBtn.addEventListener('click', () => {
+                if (window.startPrivateChat) {
+                    window.startPrivateChat(profileUserId);
+                } else {
+                    console.error('Chat function not available');
+                }
+            });
+
         } else { // Not logged in
             profileActions.style.display = 'none';
             editProfileLink.style.display = 'none';
@@ -368,6 +383,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     db.ref(`users/${currentUserId}/following/${profileUserId}`).set(true);
                     db.ref(`users/${profileUserId}/followers/${currentUserId}`).set(true);
+
+                    // Create notification
+                    const notificationRef = db.ref(`notifications/${profileUserId}`).push();
+                    notificationRef.set({
+                        senderId: currentUserId,
+                        type: 'follow',
+                        message: `đã theo dõi bạn.`,
+                        link: `wall.html?id=${currentUserId}`,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        read: false
+                    });
                 }
             });
         };
@@ -530,7 +556,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function sendFriendRequest(fromId, toId) {
         db.ref(`friend_requests/${toId}/${fromId}`).set({ status: 'pending', from: fromId, timestamp: Date.now() })
-            .then(() => console.log("Friend request sent."));
+            .then(() => {
+                console.log("Friend request sent.");
+                // Create notification
+                const notificationRef = db.ref(`notifications/${toId}`).push();
+                notificationRef.set({
+                    senderId: fromId,
+                    type: 'friend_request',
+                    message: 'đã gửi cho bạn một lời mời kết bạn.',
+                    link: `wall.html?id=${fromId}`,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false
+                });
+            });
     }
 
     function acceptFriendRequest(currentUserId, requestingUserId) {
@@ -538,7 +576,19 @@ document.addEventListener('DOMContentLoaded', function() {
         updates[`/users/${currentUserId}/friends/${requestingUserId}`] = true;
         updates[`/users/${requestingUserId}/friends/${currentUserId}`] = true;
         updates[`/friend_requests/${currentUserId}/${requestingUserId}`] = null;
-        db.ref().update(updates).then(() => console.log("Friend request accepted."));
+        db.ref().update(updates).then(() => {
+            console.log("Friend request accepted.");
+            // Create notification
+            const notificationRef = db.ref(`notifications/${requestingUserId}`).push();
+            notificationRef.set({
+                senderId: currentUserId,
+                type: 'friend_request_accepted',
+                message: 'đã chấp nhận lời mời kết bạn của bạn.',
+                link: `wall.html?id=${currentUserId}`,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                read: false
+            });
+        });
     }
 
     function updateAverageRating(userId) {

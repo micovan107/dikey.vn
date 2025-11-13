@@ -504,56 +504,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Load users
         const usersRef = db.ref('users');
-        usersRef.on('child_added', snapshot => {
-            const user = snapshot.val();
-            const userId = snapshot.key;
-
-            if (userId !== currentUser.uid && !window.renderedUsers[userId]) {
-                if (usersContainer.children.length === 0) {
-                    usersContainer.innerHTML = '<h4 class="user-list-header">Người dùng</h4>';
+        usersRef.once('value', async snapshot => {
+            const allUsers = [];
+            snapshot.forEach(childSnapshot => {
+                if (childSnapshot.key !== currentUser.uid) {
+                    allUsers.push({ id: childSnapshot.key, ...childSnapshot.val() });
                 }
+            });
 
-                const userItem = document.createElement('div');
-                userItem.className = 'chat-list-item user-list-item';
-                userItem.dataset.id = userId;
-                userItem.dataset.name = user.displayName || user.email;
-                userItem.dataset.isGroup = 'false';
-                userItem.innerHTML = `
-                    <div class="avatar-container">
-                        <img src="${user.photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar">
-                        <span class="status-indicator" id="status-${userId}"></span>
-                    </div>
-                    <div class="lzc_user_info">
-                        <span class="lzc_uname">${user.displayName || user.email}</span>
-                        <span class="lzc_utime"></span>
-                    </div>
-                    <span class="lzc_count_msg"></span>
-                `;
-                usersContainer.appendChild(userItem);
-                window.renderedUsers[userId] = userItem;
+            const chattedUsers = [];
+            const newUsers = [];
 
-                const chatId = getPrivateChatId(currentUser.uid, userId);
-                updateLastMessageAndUnread(chatId, userItem);
-
-                // Attach presence listeners
-                const presenceRef = db.ref(`presence/${userId}`);
-                const listener = presenceRef.on('value', (presenceSnapshot) => {
-                    const statusIndicator = document.getElementById(`status-${userId}`);
-                    if (statusIndicator) {
-                        if (presenceSnapshot.val() === 'online') {
-                            statusIndicator.classList.add('online');
-                            statusIndicator.classList.remove('offline');
-                        } else {
-                            statusIndicator.classList.add('offline');
-                            statusIndicator.classList.remove('online');
-                        }
+            // Asynchronously check for chat history for each user
+            const promises = allUsers.map(user => {
+                const chatId = getPrivateChatId(currentUser.uid, user.id);
+                const lastMessageRef = db.ref('messages/' + chatId).limitToLast(1);
+                return lastMessageRef.once('value').then(messageSnapshot => {
+                    if (messageSnapshot.exists()) {
+                        chattedUsers.push(user);
+                    } else {
+                        newUsers.push(user);
                     }
                 });
-                if (!window.userPresenceListeners) {
-                    window.userPresenceListeners = [];
-                }
-                window.userPresenceListeners.push({ ref: presenceRef, listener });
+            });
+
+            await Promise.all(promises);
+
+            // Shuffle newUsers and take the first 20
+            const shuffledNewUsers = newUsers.sort(() => 0.5 - Math.random());
+            const usersToDisplay = [...chattedUsers, ...shuffledNewUsers.slice(0, 20)];
+
+            if (usersContainer.children.length === 0 && usersToDisplay.length > 0) {
+                usersContainer.innerHTML = '<h4 class="user-list-header">Người dùng</h4>';
             }
+
+            usersToDisplay.forEach(user => {
+                const userId = user.id;
+                if (!window.renderedUsers[userId]) {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'chat-list-item user-list-item';
+                    userItem.dataset.id = userId;
+                    userItem.dataset.name = user.displayName || user.email;
+                    userItem.dataset.isGroup = 'false';
+                    userItem.innerHTML = `
+                        <div class="avatar-container">
+                            <img src="${user.photoURL || 'https://i.pravatar.cc/30'}" alt="Avatar">
+                            <span class="status-indicator" id="status-${userId}"></span>
+                        </div>
+                        <div class="lzc_user_info">
+                            <span class="lzc_uname">${user.displayName || user.email}</span>
+                            <span class="lzc_utime"></span>
+                        </div>
+                        <span class="lzc_count_msg"></span>
+                    `;
+                    usersContainer.appendChild(userItem);
+                    window.renderedUsers[userId] = userItem;
+
+                    const chatId = getPrivateChatId(currentUser.uid, userId);
+                    updateLastMessageAndUnread(chatId, userItem);
+
+                    // Attach presence listeners
+                    const presenceRef = db.ref(`presence/${userId}`);
+                    const listener = presenceRef.on('value', (presenceSnapshot) => {
+                        const statusIndicator = document.getElementById(`status-${userId}`);
+                        if (statusIndicator) {
+                            if (presenceSnapshot.val() === 'online') {
+                                statusIndicator.classList.add('online');
+                                statusIndicator.classList.remove('offline');
+                            } else {
+                                statusIndicator.classList.add('offline');
+                                statusIndicator.classList.remove('online');
+                            }
+                        }
+                    });
+                    if (!window.userPresenceListeners) {
+                        window.userPresenceListeners = [];
+                    }
+                    window.userPresenceListeners.push({ ref: presenceRef, listener });
+                }
+            });
         });
 
         usersRef.on('child_changed', snapshot => {
@@ -783,6 +812,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const timeElement = chatListItem.querySelector('.lzc_utime');
                 if (timeElement) {
                     timeElement.textContent = timeAgo;
+                }
+
+                // Move the chat list item to the top of its container
+                const parent = chatListItem.parentNode;
+                if (parent) {
+                    const header = parent.querySelector('h4');
+                    if (header) {
+                        header.after(chatListItem);
+                    } else {
+                        parent.prepend(chatListItem);
+                    }
                 }
             }
         });
@@ -1438,4 +1478,34 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         });
     }
+
+    async function startPrivateChat(userId) {
+        if (!currentUser) {
+            console.error("User not logged in");
+            return;
+        }
+        if (userId === currentUser.uid) {
+            console.error("Cannot start a chat with yourself.");
+            return;
+        }
+
+        const userData = await getUserData(userId);
+        if (!userData) {
+            console.error("User not found");
+            return;
+        }
+
+        const chatId = getPrivateChatId(currentUser.uid, userId);
+        const chatName = userData.displayName || userData.email;
+        const avatarUrl = userData.photoURL;
+
+        openChatWindow({
+            id: chatId,
+            name: chatName,
+            isGroup: false,
+            avatarUrl: avatarUrl
+        });
+    }
+
+    window.startPrivateChat = startPrivateChat;
 });

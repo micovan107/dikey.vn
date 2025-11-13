@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function loadNotifications(userId) {
         const notificationsRef = db.ref(`notifications/${userId}`);
-        notificationsRef.on('value', (snapshot) => {
+        notificationsRef.on('value', async (snapshot) => {
             const notifications = snapshot.val();
             const notificationModalBody = document.getElementById('notification-modal-body');
             const notificationCount = document.getElementById('notification-count');
@@ -136,7 +136,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             unreadCount++;
                         }
                         const time = new Date(notification.timestamp).toLocaleString('vi-VN');
-                        notificationItem.innerHTML = `<a href="${notification.link}"><div>${notification.message}</div><small>${time}</small></a>`;
+
+                        // Fetch sender's name
+                        const senderRef = db.ref(`users/${notification.senderId}`);
+                        const senderSnapshot = await senderRef.once('value');
+                        const senderData = senderSnapshot.val();
+                        const senderName = senderData ? senderData.displayName : 'Một người dùng';
+                        notificationItem.innerHTML = `<a href="${notification.link}"><div><strong>${senderName}</strong> ${notification.message}</div><small>${time}</small></a>`;
+
                         notificationItem.addEventListener('click', () => window.location.href = notification.link);
                         notificationModalBody.appendChild(notificationItem);
                     }
