@@ -1278,6 +1278,14 @@ footer {
     margin-top: 15px;
 }
 
+#original-post-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+
 .youtube-embed-container {
     position: relative;
     padding-bottom: 56.25%; /* 16:9 */
@@ -1815,6 +1823,14 @@ footer {
     font-size: 0.1em;
     margin-left: auto;
 }
+
+#post-detail-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
 
 #message-btn {
     background-color: #0084ff;
