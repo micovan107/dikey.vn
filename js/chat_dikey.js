@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (mainHeader) {
                     const subHeader = document.createElement('div');
                     subHeader.className = 'sub-header';
-                    subHeader.innerHTML = '<button id="open-chat-mobile-btn">Mở Chat</button>';
+                    subHeader.innerHTML = '<button id="open-chat-mobile-btn">💬</button>';
                     mainHeader.insertAdjacentElement('afterend', subHeader);
 
                     document.getElementById('open-chat-mobile-btn').addEventListener('click', () => {
@@ -1508,4 +1508,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.startPrivateChat = startPrivateChat;
+
 });
