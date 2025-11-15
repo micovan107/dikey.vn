@@ -97,57 +97,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         #video-call-window {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 600px;
-            height: 400px;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
             background-color: #2c2f33;
-            z-index: 2000;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            border-radius: 0 !important;
+            display: none;
+            z-index: 9999 !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
         .video-call-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background-color: #23272a;
+            position: absolute;
+            top: 20px;
+            left: 20px;
             color: white;
+            z-index: 1;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
         }
 
         .video-container {
-            flex-grow: 1;
+            width: 100%;
+            height: 100%;
             position: relative;
         }
 
         #local-video {
+            width: 120px;
+            height: 180px;
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 150px;
-            height: 100px;
+            bottom: 80px;
+            right: 20px;
             border: 2px solid white;
             border-radius: 5px;
+            z-index: 1;
         }
 
         #remote-video {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
-        .video-call-footer {
-            padding: 10px;
-            text-align: center;
-            background-color: #23272a;
+        #end-call-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: red;
+            color: white;
+            font-size: 12px;
+            z-index: 1;
+            border: none;
+            cursor: pointer;
         }
 
-        #end-call-btn, #answer-call-btn, #reject-call-btn {
+        #answer-call-btn, #reject-call-btn {
             background: none;
             border: none;
             color: white;
@@ -172,6 +187,10 @@ document.addEventListener('DOMContentLoaded', () => {
             max-width: 120px; /* Adjust as needed */
             display: inline-block; /* or block */
             vertical-align: middle;
+        }
+
+        .video-call-active {
+            overflow: hidden;
         }
     `;
 
@@ -1731,7 +1750,6 @@ document.addEventListener('DOMContentLoaded', () => {
         videoCallWindow.innerHTML = `
             <div class="video-call-header">
                 <span>Video Call with ${otherUserId}</span>
-                <button id="end-call-btn"><i class="fas fa-phone-slash"></i></button>
             </div>
             <div class="video-container">
                 <video id="local-video" autoplay muted playsinline></video>
@@ -1739,8 +1757,14 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         document.body.appendChild(videoCallWindow);
+        videoCallWindow.style.display = 'flex';
+        document.body.classList.add('video-call-active');
 
-        videoCallWindow.querySelector('#end-call-btn').addEventListener('click', () => endVideoCall(true));
+        const endCallBtn = document.createElement('button');
+        endCallBtn.id = 'end-call-btn';
+        endCallBtn.innerHTML = '<i class="fas fa-phone-slash"></i>';
+        endCallBtn.addEventListener('click', () => endVideoCall(true));
+        videoCallWindow.appendChild(endCallBtn);
     }
 
     function closeVideoCallWindow() {
@@ -1748,6 +1772,7 @@ document.addEventListener('DOMContentLoaded', () => {
             videoCallWindow.remove();
             videoCallWindow = null;
         }
+        document.body.classList.remove('video-call-active');
         if (localStream) {
             localStream.getTracks().forEach(track => track.stop());
             localStream = null;
