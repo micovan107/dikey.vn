@@ -16,24 +16,38 @@ document.addEventListener("DOMContentLoaded", () => {
             // Daily login bonus
             userRef.once('value').then((snapshot) => {
                 const userData = snapshot.val() || {};
+                const updates = {};
+
+                // Initialize game stats if they don't exist
+                if (typeof userData.xu === 'undefined') {
+                    updates.xu = 500;
+                }
+                if (typeof userData.power === 'undefined') {
+                    updates.power = 10;
+                }
+                if (typeof userData.health === 'undefined') {
+                    updates.health = 100;
+                }
+                if (typeof userData.defense === 'undefined') {
+                    updates.defense = 5;
+                }
+
+                // Daily login bonus
                 const lastLogin = userData.lastLogin;
                 const today = new Date().toDateString();
                 const lastLoginDate = lastLogin ? new Date(lastLogin).toDateString() : null;
 
-                let currentXu = userData.xu || 0;
+                let currentXu = userData.xu || updates.xu || 0;
 
                 if (lastLoginDate !== today) {
-                    currentXu += 100;
-                    userRef.update({
-                        lastLogin: firebase.database.ServerValue.TIMESTAMP,
-                        xu: currentXu
-                    }).then(() => {
+                    updates.lastLogin = firebase.database.ServerValue.TIMESTAMP;
+                    updates.xu = currentXu + 100;
+                    userRef.update(updates).then(() => {
                         alert("Bạn đã được tặng 100 xu vì đăng nhập ngày hôm nay!");
                     });
                 } else {
-                    userRef.update({
-                        lastLogin: firebase.database.ServerValue.TIMESTAMP
-                    });
+                    updates.lastLogin = firebase.database.ServerValue.TIMESTAMP;
+                    userRef.update(updates);
                 }
             });
 
@@ -59,7 +73,9 @@ document.addEventListener("DOMContentLoaded", () => {
                              <a href="dikeygo.html">Chia sẻ hằng ngày</a>
                               <a href="shop.html">Quà ảo</a>
                                <a href="budget.html">Ngân sách</a>
-                               <a href="friend.html">Bạn bè</a>
+                            <a href="buy-elixir.html">Mua Linh Đan</a>
+                    <a href="cultivate-elixir.html">Luyện Linh Đan</a>
+
                                <a href="#" id="logout-button">Đăng xuất</a>
                         </div>
                     </div>
@@ -190,5 +206,4 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         });
     }
-
 });
