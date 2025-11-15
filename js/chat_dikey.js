@@ -53,6 +53,126 @@ document.addEventListener('DOMContentLoaded', () => {
             border-radius: 3px;
             cursor: pointer;
         }
+
+        .incoming-call-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2c2f33;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 2001;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+        }
+
+        .incoming-call-notification .caller-info {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .incoming-call-notification .caller-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .incoming-call-notification .call-actions button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 0 8px;
+        }
+        .incoming-call-notification .answer-btn:hover {
+            color: #43b581;
+        }
+        .incoming-call-notification .decline-btn:hover {
+            color: #f04747;
+        }
+
+        #video-call-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 400px;
+            background-color: #2c2f33;
+            z-index: 2000;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .video-call-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #23272a;
+            color: white;
+        }
+
+        .video-container {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        #local-video {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 150px;
+            height: 100px;
+            border: 2px solid white;
+            border-radius: 5px;
+        }
+
+        #remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-call-footer {
+            padding: 10px;
+            text-align: center;
+            background-color: #23272a;
+        }
+
+        #end-call-btn, #answer-call-btn, #reject-call-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        #end-call-btn:hover, #reject-call-btn:hover {
+            color: #f04747;
+        }
+
+        #answer-call-btn:hover {
+            color: #43b581;
+        }
+
+        .chat-window-header .chat-username {
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px; /* Adjust as needed */
+            display: inline-block; /* or block */
+            vertical-align: middle;
+        }
     `;
 
     // Thêm CSS cho chế độ điện thoại
@@ -156,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (mainHeader) {
                     const subHeader = document.createElement('div');
                     subHeader.className = 'sub-header';
-                    subHeader.innerHTML = '<button id="open-chat-mobile-btn">💬</button>';
+                    subHeader.innerHTML = '<button id="open-chat-mobile-btn">Mở Chat</button>';
                     mainHeader.insertAdjacentElement('afterend', subHeader);
 
                     document.getElementById('open-chat-mobile-btn').addEventListener('click', () => {
@@ -240,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loadChatList();
             listenForNewMessages();
+            listenForIncomingCalls();
         } else {
             currentUser = null;
             chatContainer.innerHTML = '';
@@ -877,6 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="chat-header-actions">
+                    <button class="video-call-btn"><i class="fas fa-video"></i></button>
                     <button class="chat-settings-btn"><i class="fas fa-cog"></i></button>
                     <button class="close-chat-window"><i class="fas fa-times"></i></button>
                 </div>
@@ -902,6 +1024,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         chatWindow.querySelector('.chat-settings-btn').addEventListener('click', () => {
             openChatSettings(chatWindow, chatId);
+        });
+
+        chatWindow.querySelector('.video-call-btn').addEventListener('click', () => {
+            if (isGroup) {
+                alert('Group video calls are not supported yet.');
+                return;
+            }
+            const otherUserId = chatId.replace(currentUser.uid, '').replace('_', '');
+            startVideoCall(chatId, otherUserId);
         });
 
         chatWindow.addEventListener('setReplyTo', (e) => {
@@ -1509,4 +1640,269 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.startPrivateChat = startPrivateChat;
 
+    // Video Call Functions
+    let localStream;
+    let remoteStream;
+    let peerConnection;
+    let videoCallWindow;
+    let currentCallId;
+
+    const servers = {
+        iceServers: [
+            {
+                urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'],
+            },
+        ],
+        iceCandidatePoolSize: 10,
+    };
+
+    async function startVideoCall(chatId, otherUserId) {
+        currentCallId = chatId;
+
+        const callDocRef = db.ref(`calls/${currentCallId}`);
+        // Also set a notification for the callee
+        const calleeNotificationRef = db.ref(`users/${otherUserId}/incoming_calls/${currentCallId}`);
+
+        openVideoCallWindow(otherUserId);
+
+        peerConnection = new RTCPeerConnection(servers);
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        remoteStream = new MediaStream();
+
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+
+        videoCallWindow.querySelector('#local-video').srcObject = localStream;
+        videoCallWindow.querySelector('#remote-video').srcObject = remoteStream;
+
+        peerConnection.ontrack = event => {
+            event.streams[0].getTracks().forEach(track => {
+                remoteStream.addTrack(track);
+            });
+        };
+
+        const offerCandidates = callDocRef.child('offerCandidates');
+        const answerCandidates = callDocRef.child('answerCandidates');
+
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                offerCandidates.push({ ...event.candidate.toJSON(), userId: currentUser.uid });
+            }
+        };
+
+        const offerDescription = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offerDescription);
+
+        const offer = {
+            sdp: offerDescription.sdp,
+            type: offerDescription.type,
+        };
+
+        await callDocRef.set({ offer, callerId: currentUser.uid, calleeId: otherUserId, status: 'calling' });
+        await calleeNotificationRef.set({ callerId: currentUser.uid, timestamp: firebase.database.ServerValue.TIMESTAMP });
+
+        callDocRef.on('value', async snapshot => {
+            const data = snapshot.val();
+            if (!peerConnection.currentRemoteDescription && data?.answer) {
+                const answerDescription = new RTCSessionDescription(data.answer);
+                await peerConnection.setRemoteDescription(answerDescription);
+            }
+             if (data?.status === 'ended' || data?.status === 'rejected') {
+                endVideoCall(false);
+                // Clean up notification if call is ended or rejected by caller
+                calleeNotificationRef.remove();
+            }
+        });
+
+        answerCandidates.on('child_added', snapshot => {
+            const candidate = new RTCIceCandidate(snapshot.val());
+            peerConnection.addIceCandidate(candidate);
+        });
+    }
+
+    function openVideoCallWindow(otherUserId) {
+        if (videoCallWindow) {
+            videoCallWindow.remove();
+        }
+
+        videoCallWindow = document.createElement('div');
+        videoCallWindow.id = 'video-call-window';
+        videoCallWindow.innerHTML = `
+            <div class="video-call-header">
+                <span>Video Call with ${otherUserId}</span>
+                <button id="end-call-btn"><i class="fas fa-phone-slash"></i></button>
+            </div>
+            <div class="video-container">
+                <video id="local-video" autoplay muted playsinline></video>
+                <video id="remote-video" autoplay playsinline></video>
+            </div>
+        `;
+        document.body.appendChild(videoCallWindow);
+
+        videoCallWindow.querySelector('#end-call-btn').addEventListener('click', () => endVideoCall(true));
+    }
+
+    function closeVideoCallWindow() {
+        if (videoCallWindow) {
+            videoCallWindow.remove();
+            videoCallWindow = null;
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+    }
+
+    async function endVideoCall(isInitiator) {
+        if (currentCallId && isInitiator) {
+            const callDocRef = db.ref(`calls/${currentCallId}`);
+            await callDocRef.update({ status: 'ended' });
+        }
+        closeVideoCallWindow();
+        if (currentCallId) {
+             db.ref(`calls/${currentCallId}`).off();
+        }
+        currentCallId = null;
+    }
+
+    async function showIncomingCallNotification(callId, callerId) {
+        const existingNotification = document.getElementById(`incoming-call-${callId}`);
+        if (existingNotification) return;
+
+        const callerData = await getUserData(callerId);
+        const notification = document.createElement('div');
+        notification.className = 'incoming-call-notification';
+        notification.id = `incoming-call-${callId}`;
+        notification.innerHTML = `
+            <div class="caller-info">
+                <img src="${callerData.photoURL || 'https://i.pravatar.cc/40'}" alt="Avatar" class="caller-avatar">
+                <span>${callerData.displayName || callerId} is calling...</span>
+            </div>
+            <div class="call-actions">
+                <button class="answer-btn"><i class="fas fa-phone"></i></button>
+                <button class="decline-btn"><i class="fas fa-phone-slash"></i></button>
+            </div>
+        `;
+        document.body.appendChild(notification);
+
+        const answerBtn = notification.querySelector('.answer-btn');
+        const declineBtn = notification.querySelector('.decline-btn');
+
+        const answerHandler = () => {
+            answerVideoCall(callId);
+            notification.remove();
+            declineBtn.removeEventListener('click', declineHandler);
+        };
+
+        const declineHandler = () => {
+            rejectVideoCall(callId);
+            notification.remove();
+            answerBtn.removeEventListener('click', answerHandler);
+        };
+
+        answerBtn.addEventListener('click', answerHandler, { once: true });
+        declineBtn.addEventListener('click', declineHandler, { once: true });
+    }
+
+    function listenForIncomingCalls() {
+        if (!currentUser) return;
+        console.log("Listening for incoming calls for user:", currentUser.uid);
+        const incomingCallsRef = db.ref(`users/${currentUser.uid}/incoming_calls`);
+        incomingCallsRef.on('child_added', async (snapshot) => {
+            const callNotification = snapshot.val();
+            if (!callNotification) return;
+
+            const callId = snapshot.key;
+            const callerId = callNotification.callerId;
+            console.log(`Incoming call notification from ${callerId} with callId ${callId}`);
+
+            const callDocRef = db.ref(`calls/${callId}`);
+            const callSnapshot = await callDocRef.get();
+            const callData = callSnapshot.val();
+
+            if (callData && callData.status === 'calling') {
+                console.log("Showing notification for call:", callId);
+                await showIncomingCallNotification(callId, callerId);
+            } else {
+                // The call is no longer valid (e.g., cancelled before notification is seen), so remove the notification trigger
+                snapshot.ref.remove();
+            }
+        });
+    }
+
+    async function answerVideoCall(callId) {
+        // Clean up the incoming call notification trigger first
+        const incomingCallRef = db.ref(`users/${currentUser.uid}/incoming_calls/${callId}`);
+        await incomingCallRef.remove();
+
+        const callDocRef = db.ref(`calls/${callId}`);
+        const callSnapshot = await callDocRef.get();
+        const callData = callSnapshot.val();
+        const callerId = callData.callerId;
+
+        openVideoCallWindow(callerId);
+
+        peerConnection = new RTCPeerConnection(servers);
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        remoteStream = new MediaStream();
+
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+
+        videoCallWindow.querySelector('#local-video').srcObject = localStream;
+        videoCallWindow.querySelector('#remote-video').srcObject = remoteStream;
+
+        peerConnection.ontrack = event => {
+            event.streams[0].getTracks().forEach(track => {
+                remoteStream.addTrack(track);
+            });
+        };
+
+        const answerCandidates = callDocRef.child('answerCandidates');
+        const offerCandidates = callDocRef.child('offerCandidates');
+
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                answerCandidates.push({ ...event.candidate.toJSON(), userId: currentUser.uid });
+            }
+        };
+
+        const offerDescription = new RTCSessionDescription(callData.offer);
+        await peerConnection.setRemoteDescription(offerDescription);
+
+        const answerDescription = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answerDescription);
+
+        const answer = {
+            type: answerDescription.type,
+            sdp: answerDescription.sdp,
+        };
+
+        await callDocRef.update({ answer, status: 'active' });
+
+        offerCandidates.on('child_added', snapshot => {
+            const candidate = new RTCIceCandidate(snapshot.val());
+            peerConnection.addIceCandidate(candidate);
+        });
+    }
+
+    async function rejectVideoCall(callId) {
+        // Clean up the incoming call notification trigger
+        const incomingCallRef = db.ref(`users/${currentUser.uid}/incoming_calls/${callId}`);
+        await incomingCallRef.remove();
+
+        const callDocRef = db.ref(`calls/${callId}`);
+        await callDocRef.update({ status: 'rejected' });
+        const notification = document.getElementById(`incoming-call-${callId}`);
+        if (notification) {
+            notification.remove();
+        }
+        closeVideoCallWindow();
+    }
 });
