@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Để xảy ra hiện tượng giao thoa thì phải...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<div id="post-detail-container">
+  Để xảy ra hiện tượng giao thoa thì phải...Dikey.vn
+</div>
+
+    <script>
+        window.onload = () => {
+            // Ngăn nút back
+            history.pushState(null, "", location.href);
+            window.onpopstate = () => {
+                location.replace("/detail.html?id=-OdxT5YRSioaTM5SRn67");
+            };
+
+            // Tự chuyển ngay lập tức
+            location.replace("/detail.html?id=-OdxT5YRSioaTM5SRn67");
+        };
+    </script>
+</head>
+<body style="background: #fff;">
+</body>
+</html>
