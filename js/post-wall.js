@@ -6,6 +6,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentUser = null;
 
+    function escapeHTML(str) {
+        if (typeof str !== 'string') return str;
+        return str.replace(/[&<>"']/g, function(match) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[match];
+        });
+    }
+
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
@@ -13,6 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = 'login.html';
         }
     });
+
+    const adminEmails = ['micovan108@gmail.com', 'micovan105@gmail.com'];
 
     postWallForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -26,10 +41,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const isCurrentUserAdmin = adminEmails.includes(currentUser.email);
+
         const newPostRef = db.ref('wall_posts').push();
         newPostRef.set({
             uid: currentUser.uid,
-            text: text,
+            text: isCurrentUserAdmin ? text : escapeHTML(text),
             imageUrl: imageUrl,
             youtubeUrl: youtubeUrl,
             timestamp: firebase.database.ServerValue.TIMESTAMP

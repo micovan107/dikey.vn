@@ -5,6 +5,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const originalPostContainer = document.getElementById("original-post-container");
     const solutionTextarea = document.getElementById("solution-text");
 
+    // Image editor elements
+    const imageEditorModal = document.getElementById('image-editor-modal');
+    const imageToEdit = document.getElementById('image-to-edit');
+    const rotateLeftBtn = document.getElementById('rotate-left-btn');
+    const rotateRightBtn = document.getElementById('rotate-right-btn');
+    const saveImageBtn = document.getElementById('save-image-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+
+    let cropper;
+    let editedImageBlob = null;
+
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
 
@@ -67,19 +78,49 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Image editing logic
     solutionImageInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                const img = document.createElement('img');
-                img.src = event.target.result;
-                img.style.maxWidth = '200px';
-                imagePreview.innerHTML = '';
-                imagePreview.appendChild(img);
+                imageToEdit.src = event.target.result;
+                imageEditorModal.style.display = 'flex';
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(imageToEdit, {
+                    aspectRatio: NaN, // Free crop
+                    viewMode: 1,
+                });
             };
             reader.readAsDataURL(file);
         }
+    });
+
+    rotateLeftBtn.addEventListener('click', () => cropper.rotate(-90));
+    rotateRightBtn.addEventListener('click', () => cropper.rotate(90));
+    cancelEditBtn.addEventListener('click', () => {
+        imageEditorModal.style.display = 'none';
+        solutionImageInput.value = ''; // Reset file input
+        editedImageBlob = null;
+        imagePreview.innerHTML = '';
+    });
+
+    saveImageBtn.addEventListener('click', () => {
+        const canvas = cropper.getCroppedCanvas();
+        canvas.toBlob(blob => {
+            editedImageBlob = blob;
+            imageEditorModal.style.display = 'none';
+
+            // Display preview
+            const previewUrl = URL.createObjectURL(blob);
+            const img = document.createElement('img');
+            img.src = previewUrl;
+            img.style.maxWidth = '200px';
+            imagePreview.innerHTML = '';
+            imagePreview.appendChild(img);
+        }, 'image/jpeg');
     });
 
     solutionForm.addEventListener("submit", async (e) => {
@@ -91,12 +132,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const solutionText = solutionTextarea.value;
-        if (solutionText.trim() === "") return;
+        if (solutionText.trim() === "" && !editedImageBlob) {
+            alert("Vui lòng nhập lời giải hoặc tải lên hình ảnh.");
+            return;
+        }
 
-        const file = solutionImageInput.files[0];
-        if (file) {
+        if (editedImageBlob) {
             const formData = new FormData();
-            formData.append('file', file);
+            formData.append('file', editedImageBlob);
             formData.append('upload_preset', cloudinaryConfig.uploadPreset);
 
             try {
