@@ -1,3 +1,5 @@
+const adminEmails = ['micovan108@gmail.com', 'micovan105@gmail.com'];
+
 document.addEventListener('DOMContentLoaded', () => {
     const chatContainer = document.getElementById('chat-container');
     if (!chatContainer) return;
@@ -1059,7 +1061,6 @@ function rerenderAllVisibleMessages() {
 
     async function openChatWindow(options) {
         const { id: chatId, name: chatName, isGroup, avatarUrl } = options;
-        const adminEmails = ['micovan108@gmail.com', 'micovan105@gmail.com'];
 
         // Reset unread count when opening window
         const unreadRef = db.ref(`unread-counts/${currentUser.uid}/${chatId}`);
@@ -1127,6 +1128,13 @@ function rerenderAllVisibleMessages() {
         chatWindow.querySelector('.close-chat-window').addEventListener('click', () => {
             chatWindow.remove();
             openChatWindows = openChatWindows.filter(id => id !== chatId);
+
+            // Clean up the message listener
+            if (window.activeMessageListeners[chatId]) {
+                const { ref, listener } = window.activeMessageListeners[chatId];
+                ref.off('child_added', listener);
+                delete window.activeMessageListeners[chatId];
+            }
         });
 
         chatWindow.querySelector('.chat-settings-btn').addEventListener('click', () => {
@@ -1243,15 +1251,16 @@ function rerenderAllVisibleMessages() {
     async function sendMessage(chatId, text, isGroup, replyToMessageId) {
         if (!currentUser || !text.trim()) return;
 
-        const userRef = db.ref(`users/${currentUser.uid}`);
-        const snapshot = await userRef.get();
-        const userData = snapshot.val();
+        const userData = await getUserData(currentUser.uid);
+        if (!userData) return;
+
+        const isCurrentUserAdmin = adminEmails.includes(currentUser.email);
 
         const messageData = {
             senderId: currentUser.uid,
             senderName: userData.displayName || currentUser.email,
             senderPhotoURL: userData.photoURL, // Use the URL from the database
-            text: escapeHTML(text),
+            text: isCurrentUserAdmin ? text : escapeHTML(text),
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             health: 100 // Initialize health for all new messages
         };
@@ -1292,7 +1301,26 @@ function rerenderAllVisibleMessages() {
 
     function retractMessage(chatId, messageId) {
         const messageRef = db.ref(`messages/${chatId}/${messageId}`);
-        messageRef.update({ text: '[retracted]' });
+        messageRef.update({
+            text: '[retracted]',
+            retracted: true
+        }).then(() => {
+            const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (messageElement) {
+                const messageTextElement = messageElement.querySelector('.message-text');
+                if (messageTextElement) {
+                    messageTextElement.innerHTML = '<em>Tin nhắn đã được thu hồi</em>';
+                    messageTextElement.classList.add('retracted');
+                }
+                // Optionally, remove the actions menu or other elements
+                const actionsElement = messageElement.querySelector('.message-actions');
+                if (actionsElement) {
+                    actionsElement.remove();
+                }
+            }
+        }).catch(error => {
+            console.error("Error retracting message: ", error);
+        });
     }
 
     function showReplyPreview(chatWindow, message) {
@@ -1323,11 +1351,19 @@ function rerenderAllVisibleMessages() {
         }
     }
 
+    window.activeMessageListeners = window.activeMessageListeners || {};
+
     function loadMessages(chatId, chatBody) {
         const messagesRef = db.ref(`messages/${chatId}`).limitToLast(20);
         let initialLoad = true;
 
-        messagesRef.on('child_added', async snapshot => {
+        // Remove any existing listener for this chat
+        if (window.activeMessageListeners[chatId]) {
+            const { ref, listener } = window.activeMessageListeners[chatId];
+            ref.off('child_added', listener);
+        }
+
+        const newListener = messagesRef.on('child_added', async snapshot => {
             if (initialLoad) return; // Skip initial data dump
 
             const msg = snapshot.val();
@@ -1348,6 +1384,9 @@ function rerenderAllVisibleMessages() {
             const isConsecutive = msg.senderId === lastSenderId && (msg.timestamp - lastMessageTimestamp) < 300000;
             appendMessage(chatBody, chatId, msg, isConsecutive);
         });
+
+        // Store the new listener
+        window.activeMessageListeners[chatId] = { ref: messagesRef, listener: newListener };
 
         messagesRef.once('value', async snapshot => {
             chatBody.innerHTML = ''; // Clear only on initial load
@@ -1380,6 +1419,9 @@ function rerenderAllVisibleMessages() {
     }
 
     function loadMoreMessages(chatId, chatBody) {
+        if (!chatBody.firstElementChild) {
+            return; // No messages, nothing to load.
+        }
         const firstMessageId = chatBody.firstElementChild.dataset.messageId;
         const messagesRef = db.ref(`messages/${chatId}`).orderByKey().endAt(firstMessageId).limitToLast(21); // Get 20 more + the last one we have
 
