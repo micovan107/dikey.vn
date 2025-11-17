@@ -7,6 +7,51 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/create-quiz.css">
 </head>
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 0;
+            }
+            #wall-posts-container {
+                padding: 10px;
+                box-sizing: border-box;
+            }
+            .left-sidebar,
+            .right-sidebar {
+                display: none;
+            }
+            .main-container {
+                display: block;
+                padding: 0 !important;
+            }
+            .main-content {
+                padding: 0 15px;
+            }
+            #posts-container {
+                padding: 0;
+            }
+            header h1 {
+                font-size: 1.25rem;
+            }
+            nav#nav-links a,
+            nav#nav-links button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .nav-avatar {
+                width: 28px;
+                height: 28px;
+            }
+                        .nav-user-name {
+    display: none !important;
+  }
+  .nav-user-profile .dropdown-content {
+    right: 0;
+    left: auto;
+  }
+        }
+            </style>
 <body>
     <script src="js/header.js"></script>
     <script src="js/auth.js"></script>
@@ -45,4 +90,5 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/create-quiz.js"></script>
 </body>
+
 </html>
