@@ -82,6 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function loadSolutions() {
         const solutionsQuery = db.ref('solutions/' + postId).orderByChild('createdAt');
         solutionsQuery.on('value', (solutionsSnapshot) => {
+            const solutionCount = solutionsSnapshot.numChildren();
+            db.ref('posts/' + postId + '/replyCount').set(solutionCount);
             solutionsContainer.innerHTML = "";
             if (!solutionsSnapshot.exists()) {
                 solutionsContainer.innerHTML = "<p>Chưa có lời giải nào cho bài tập này.</p>";
