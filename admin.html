@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Quản Trị - dikey.vn</title>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Bảng điều khiển quản trị</h1>
+        <div id="admin-content">
+            <!-- Sub-Admin Management -->
+            <div id="sub-admin-management">
+                <h2>Quản lý Sub-Admin</h2>
+                <form id="add-sub-admin-form">
+                    <input type="email" id="sub-admin-email" placeholder="Nhập email để cấp quyền sub-admin" required>
+                    <button type="submit">Thêm Sub-Admin</button>
+                </form>
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-label="Email">Email</th>
+                            <th data-label="Hành động">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sub-admin-list">
+                        <!-- Dữ liệu sub-admin sẽ được điền vào đây -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Assignment Management -->
+            <div id="assignment-management" style="margin-top: 40px;">
+                <h2>Quản lý bài tập</h2>
+                <table id="assignments-table">
+                    <thead>
+                        <tr>
+                            <th data-label="Tiêu đề">Tiêu đề</th>
+                            <th data-label="Ngày tạo">Ngày tạo</th>
+                            <th data-label="Hành động">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dữ liệu bài tập sẽ được điền vào đây -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Solution Management -->
+            <div id="solution-management" style="margin-top: 40px;">
+                <h2>Quản lý lời giải</h2>
+                <table id="solutions-table">
+                    <thead>
+                        <tr>
+                            <th data-label="Bài đăng gốc">Bài đăng gốc</th>
+                            <th data-label="Người giải">Người giải</th>
+                            <th data-label="Nội dung">Nội dung</th>
+                            <th data-label="Ảnh">Ảnh</th>
+                            <th data-label="Ngày giải">Ngày giải</th>
+                            <th data-label="Hành động">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dữ liệu lời giải sẽ được điền vào đây -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Chỉnh sửa nội dung</h2>
+            <textarea id="edit-textarea"></textarea>
+            <button id="save-edit-button">Lưu thay đổi</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
