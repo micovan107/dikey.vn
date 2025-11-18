@@ -24,13 +24,17 @@ main {
     transform: translateY(-5px);
 }
 
-.quiz-item h2 {
+.quiz-item p {
     margin-top: 0;
     font-size: 1.2em;
     color: #333;
+        white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .quiz-item a {
     text-decoration: none;
     color: inherit;
+
 }
