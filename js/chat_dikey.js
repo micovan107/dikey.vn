@@ -1788,36 +1788,41 @@ function rerenderAllVisibleMessages() {
         return messageElement;
     }
 
-    function attackMessage(attackerId, chatId, messageId) {
+    async function attackMessage(attackerId, chatId, messageId) {
         const pvpModeActive = document.body.classList.contains('pvp-mode-active');
         if (!pvpModeActive) return;
 
         const attackerRef = db.ref(`users/${attackerId}`);
         const messageRef = db.ref(`messages/${chatId}/${messageId}`);
 
-        attackerRef.once('value', attackerSnapshot => {
-            const attackerData = attackerSnapshot.val();
-            const attackPower = attackerData.power || 10; // Default power if not set
+        const attackerSnapshot = await attackerRef.once('value');
+        const attackerData = attackerSnapshot.val();
+        const attackPower = attackerData.power || 10; // Default power if not set
 
-            messageRef.transaction(messageData => {
-                if (messageData) {
-                    // Can't attack your own messages
-                    if (messageData.senderId === attackerId) {
-                        return; // Abort transaction
+        const messageSnapshot = await messageRef.once('value');
+        const messageData = messageSnapshot.val();
+
+        if (messageData && messageData.senderId !== attackerId) {
+            const defenderId = messageData.senderId;
+            const defenderRef = db.ref(`users/${defenderId}`);
+            const defenderSnapshot = await defenderRef.once('value');
+            const defenderData = defenderSnapshot.val();
+            const defenderDefense = defenderData.defense || 5; // Default defense if not set
+
+            const damage = Math.max(0, attackPower - defenderDefense);
+
+            messageRef.transaction(currentData => {
+                if (currentData) {
+                    if (currentData.health === undefined) {
+                        currentData.health = 100;
                     }
+                    currentData.health -= damage;
 
-                    if (messageData.health === undefined) {
-                        messageData.health = 100;
-                    }
-                    messageData.health -= attackPower;
-
-                    if (messageData.health <= 0) {
-                        // Instead of removing here, the listener will handle it
-                        // This ensures that all clients see the removal at the same time
-                        messageData = null;
+                    if (currentData.health <= 0) {
+                        return null; // Deletes the message
                     }
                 }
-                return messageData;
+                return currentData;
             }, (error, committed, snapshot) => {
                 if (error) {
                     console.error("Attack transaction failed: ", error);
@@ -1832,7 +1837,7 @@ function rerenderAllVisibleMessages() {
                     }
                 }
             });
-        });
+        }
     }
 
     function listenForNewMessages() {
