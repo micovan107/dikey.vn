@@ -18,7 +18,7 @@ async function loadQuizzes() {
         const quizLink = document.createElement('a');
         quizLink.href = `quiz-detail.html?id=${quiz.id}`;
 
-        const quizTitle = document.createElement('h2');
+        const quizTitle = document.createElement('h4');
         quizTitle.textContent = quiz.question;
 
         quizLink.appendChild(quizTitle);
@@ -26,5 +26,6 @@ async function loadQuizzes() {
         quizListContainer.appendChild(quizItem);
     });
 }
+
 
 loadQuizzes();
