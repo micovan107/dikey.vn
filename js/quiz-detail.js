@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function displayQuizDetail(quiz, quizId) {
         quizDetailContainer.innerHTML = ""; // Clear previous content
 
-        const question = document.createElement('h1');
+        const question = document.createElement('p');
         question.textContent = quiz.question;
         quizDetailContainer.appendChild(question);
 
@@ -172,4 +172,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Event listener for the next quiz button
     nextQuizBtn.addEventListener("click", loadRandomQuiz);
+
 });
