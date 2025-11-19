@@ -26,18 +26,22 @@ main {
 
 .quiz-item p {
     margin-top: 0;
-    font-size: 1.0em;
+    font-size: 1em;
     color: #333;
-        white-space: nowrap;
+    
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* số dòng muốn hiển thị */
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
+
 
 .quiz-item a {
     text-decoration: none;
     color: inherit;
 
 }
+
 
 
 
