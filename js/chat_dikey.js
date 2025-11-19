@@ -40,6 +40,15 @@ document.addEventListener('DOMContentLoaded', () => {
             overflow-y: auto;
         }
 
+        #user-selection-list {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin-bottom: 10px;
+            color: black;
+        }
+
         .member-item {
             display: flex;
             justify-content: space-between;
@@ -488,6 +497,18 @@ function rerenderAllVisibleMessages() {
 }
 
     function openGroupCreationWindow() {
+        const style = document.createElement('style');
+        style.innerHTML = `
+            #user-selection-list {
+                max-height: 150px;
+                overflow-y: auto;
+                border: 1px solid #ccc;
+                padding: 5px;
+                margin-bottom: 10px;
+            }
+        `;
+        document.head.appendChild(style);
+
         const groupCreationWindow = document.createElement('div');
         groupCreationWindow.className = 'chat-window';
         groupCreationWindow.style.display = 'block';
