@@ -307,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentUser;
     let openChatWindows = [];
     let chatList;
+    const notificationSound = new Audio('https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3');
 
     const defaultGroupAvatars = {
         'group_hoc_tap': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxqEOBB_zQRIYACT3EoyGiaIQ9mjLYDdjjEQ&s',
@@ -314,6 +315,26 @@ document.addEventListener('DOMContentLoaded', () => {
         'group_giao_luu': 'https://cdn.lazi.vn/storage/uploads/photo/1762689393_lazi_235423.jpg',
         'group_cong_dong_viet': 'https://cdn.lazi.vn/storage/uploads/photo/1762689473_lazi_103824.png'
     };
+
+    function listenForTotalUnreadCount(userId) {
+        const totalUnreadRef = db.ref(`unread-counts/${userId}`);
+        totalUnreadRef.on('value', snapshot => {
+            const allUnreadCounts = snapshot.val();
+            let totalUnread = 0;
+            if (allUnreadCounts) {
+                totalUnread = Object.values(allUnreadCounts).reduce((sum, count) => sum + count, 0);
+            }
+
+            const mobileChatBtn = document.getElementById('open-chat-mobile-btn');
+            if (mobileChatBtn) {
+                if (totalUnread > 0) {
+                    mobileChatBtn.innerHTML = `Mở Chat (${totalUnread})`;
+                } else {
+                    mobileChatBtn.innerHTML = 'Mở Chat';
+                }
+            }
+        });
+    }
 
     auth.onAuthStateChanged(user => {
         if (user) {
@@ -445,6 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadChatList();
             listenForNewMessages();
             listenForIncomingCalls();
+            listenForTotalUnreadCount(user.uid); // Listen for total unread count
         } else {
             currentUser = null;
             chatContainer.innerHTML = '';
@@ -1286,9 +1308,8 @@ function rerenderAllVisibleMessages() {
             const memberIds = chatId.split('_');
             const otherUserId = memberIds.find(id => id !== currentUser.uid);
 
-            // Increment unread count for the other user
-            const unreadRef = db.ref(`unread-counts/${otherUserId}/${chatId}`);
-            unreadRef.transaction((currentCount) => (currentCount || 0) + 1);
+            // The unread count logic is now handled by the recipient's client
+            // to avoid incrementing the count when the chat is already open.
 
             const userMessagesRef = db.ref(`user-messages/${otherUserId}`);
             userMessagesRef.push({
@@ -1845,17 +1866,43 @@ function rerenderAllVisibleMessages() {
         const userMessagesRef = db.ref('user-messages/' + currentUser.uid);
         userMessagesRef.on('child_added', snapshot => {
             const messageData = snapshot.val();
+            if (!messageData) return;
+
             const chatId = messageData.chatId;
             const chatName = messageData.chatName;
             const isGroup = messageData.isGroup;
+            const avatarUrl = messageData.avatarUrl;
 
-            if (!openChatWindows.includes(chatId)) {
-                // The new message indicator is now handled by updateLastMessageAndUnread
+            const isChatOpen = openChatWindows.includes(chatId);
+            const isDesktop = window.innerWidth > 768;
+
+            const unreadRef = db.ref(`unread-counts/${currentUser.uid}/${chatId}`);
+            // If chat is open and tab is active, reset unread count.
+            if (isChatOpen && !document.hidden) {
+                unreadRef.set(0);
+            } else {
+                // Otherwise, increment unread count and play sound
+                playSound();
+                unreadRef.transaction((currentCount) => (currentCount || 0) + 1);
             }
 
-            openChatWindow(chatId, chatName, isGroup);
+            // On desktop, open the window if it's not already open.
+            if (isDesktop && !isChatOpen) {
+                openChatWindow({ id: chatId, name: chatName, isGroup: isGroup, avatarUrl: avatarUrl });
+            }
+            
             userMessagesRef.child(snapshot.key).remove();
         });
+    }
+
+    function playSound() {
+        notificationSound.currentTime = 0;
+        const playPromise = notificationSound.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.error("Audio play was prevented:", error);
+            });
+        }
     }
 
     function openChatSettings(chatWidget, chatId) {
