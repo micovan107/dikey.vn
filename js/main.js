@@ -1,4 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const categoryMap = {
+        'toan': 'Toán học',
+        'ly': 'Vật lý',
+        'hoa': 'Hóa học',
+        'van': 'Ngữ văn',
+        'anh': 'Tiếng Anh',
+        'sinh': 'Sinh học',
+        'su': 'Lịch sử',
+        'dia': 'Địa lý',
+        'tin': 'Tin học',
+        'khac': 'Tổng hợp'
+    };
     const welcomeTitles = [
         "Học, học nữa, học mãi!",
         "Tri thức là sức mạnh.",
@@ -76,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         categoryList.appendChild(allSubjectsLi);
 
-        const categories = ["Toán học ", "Vật lý", "Hóa học", "Văn học", "Tiếng anh", "Sinh học", "Lịch sử", "Địa lý", "Tin học", "Khác"];
+        const categories = ["Âm nhạc", "Mỹ thuật", "Toán học", "Vật lý", "Hóa học", "Ngữ văn", "Tiếng Việt", "Tiếng Anh", "Đạo đức", "Khoa học", "Lịch sử", "Địa lý", "Sinh học", "Tin học", "Lập trình", "Công nghệ", "Giáo dục thể chất", "Giáo dục Công dân", "Giáo dục Quốc phòng và An ninh", "Ngoại ngữ khác", "Xác suất thống kê", "Tài chính tiền tệ", "Giáo dục kinh tế và pháp luật", "Hoạt động trải nghiệm", "Khoa học tự nhiên", "Khoa học xã hội", "Tự nhiên & xã hội", "Bằng lái xe", "Tổng hợp"];
         const grades = {
             "Tiểu học (Lớp 1-5)": "tieu-hoc",
             "THCS (Lớp 6-9)": "thcs",
@@ -211,7 +223,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (selectedCategory) {
                 const [, value] = selectedCategory.split(':');
-                filteredPosts = filteredPosts.filter(p => p.category === value);
+                filteredPosts = filteredPosts.filter(p => {
+                    const postCategory = categoryMap[p.category] || p.category;
+                    return postCategory === value;
+                });
             }
 
             if (selectedGrade) {
@@ -243,6 +258,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     imageHtml = `<a href="detail.html?id=${post.id}"><img src="${post.imageUrl}" alt="Post image" class="post-image"></a>`;
                 }
 
+                const displayCategory = categoryMap[post.category] || post.category;
+
                 postElement.innerHTML = `
                     <div class="post-header">
                         <a href="wall.html?id=${post.authorId}">
@@ -250,6 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </a>
                         <div class="post-info">
                             <p class="post-meta">Đăng bởi <a href="wall.html?id=${post.authorId}">${author.displayName || author.email}</a> • ${postDate}</p>
+                            <p class="post-category">Môn: ${displayCategory}</p>
                         </div>
                     </div>
                     <div class="post-content">
