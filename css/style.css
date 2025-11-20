@@ -1854,3 +1854,12 @@ footer {
 #message-btn:hover {
     background-color: #0073e6;
 }
+
+.post-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.post-meta, .post-category {
+    margin: 0;
+}
