@@ -6,16 +6,50 @@ main {
 }
 
 #quiz-list-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
+.nen_trang_full {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 0; /* Adjusted from 15px to 0 as gap is used now */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.nen_trang_full p {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+}
+
+.nen_trang_full p a {
+    text-decoration: none;
+    color: #333;
+}
+
+.nen_trang_full p a:hover {
+    text-decoration: underline;
+}
+
+.nen_trang_full p span {
+    font-size: 0.9rem;
+    color: #888;
+    font-weight: normal;
+}
+
+.create_date_in_list {
+    font-size: 0.85rem;
+    color: #777;
+}
+
+/* Fallback for old quiz-item structure if any */
 .quiz-item {
     background-color: #fff;
     border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 1px;
+    padding: 15px;
+    border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: transform 0.2s;
 }
@@ -24,15 +58,18 @@ main {
     transform: translateY(-5px);
 }
 
+.quiz-item a {
+    text-decoration: none;
+    color: inherit;
+}
+
 .quiz-item p {
-    margin-top: 0;
-    font-size: 1em;
-    color: #333;
-    
     display: -webkit-box;
-    -webkit-line-clamp: 3; /* số dòng muốn hiển thị */
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
 }
 
 
@@ -41,7 +78,3 @@ main {
     color: inherit;
 
 }
-
-
-
-
