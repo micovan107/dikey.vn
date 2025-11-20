@@ -80,7 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const description = document.getElementById("description").value;
-            const category = document.getElementById("category-select").value;
+            const categorySelect = document.getElementById("category-select");
+            const category = categorySelect.options[categorySelect.selectedIndex].text;
             const grade = document.getElementById("grade-select").value;
 
             if (!category || !grade) {
