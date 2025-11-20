@@ -1,4 +1,39 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const welcomeTitles = [
+        "Học, học nữa, học mãi!",
+        "Tri thức là sức mạnh.",
+        "Học tập là hạt giống của kiến thức, kiến thức là hạt giống của hạnh phúc.",
+        "Đừng xấu hổ khi không biết, chỉ xấu hổ khi không học.",
+        "Học vấn do người siêng năng đạt được, tài sản do người tinh tế sở hữu.",
+            "Mỗi trang sách là một bước tiến gần hơn tới tương lai.",
+    "Không có đường tắt đến thành công, chỉ có chăm chỉ và quyết tâm.",
+    "Hôm nay cố gắng, ngày mai tự hào.",
+    "Kiến thức không bao giờ phụ người chịu học.",
+    "Thất bại chỉ là bài học, miễn là bạn không bỏ cuộc.",
+    "Muốn đi nhanh thì đi một mình, muốn đi xa thì đi cùng tri thức.",
+    "Sự nỗ lực hôm nay chính là thành công ngày mai.",
+    "Học tập không làm bạn mệt, chỉ có lười mới khiến bạn mỏi.",
+    "Mỗi giờ học trôi qua là một cơ hội để mạnh mẽ hơn.",
+    "Không ai sinh ra đã giỏi, chỉ là người ta học chăm hơn bạn thôi.",
+    "Học không vì điểm, học vì tương lai của chính mình.",
+    "Thay vì than khó, hãy học cách chinh phục.",
+    "Kiến thức có thể không nhìn thấy, nhưng nó tỏa sáng trong suy nghĩ bạn.",
+    "Hãy học như thể ngày mai bạn phải dùng đến nó.",
+    "Càng học càng thấy mình nhỏ bé, càng hiểu càng thấy thế giới rộng lớn.",
+    "Bạn đang gặp bài khó phải không?",
+    "Cố gắng lên nào, tôi tin vào bạn!",
+    "Đừng để điểm kém che mờ con mắt.",
+    "Đừng chỉ nhìn vào cuộc sống màu hồng của người khác mà hãy nhìn vào cách họ cố gắng để có được nó.",
+   "Bạn có mệt không, xả hơi tý nào <a href='https://micovan107.github.io/dikey.vn/fun-quiz-list.html'>Đố vui</a>"
+
+    ];
+
+    const welcomeTitleElement = document.getElementById("welcome-title");
+    if (welcomeTitleElement) {
+        const randomIndex = Math.floor(Math.random() * welcomeTitles.length);
+        welcomeTitleElement.innerHTML = welcomeTitles[randomIndex];
+    }
+
     const postsContainer = document.getElementById("posts-container");
     const categoryList = document.querySelector(".category-list");
     const rankingList = document.querySelector(".ranking-list");
