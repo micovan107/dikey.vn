@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Luôn cập nhật hồ sơ người dùng trong cơ sở dữ liệu với thông tin mới nhất từ nhà cung cấp xác thực
             userRef.update({
                 displayName: user.displayName,
+                username: user.displayName || user.email.split('@')[0],
                 email: user.email,
                 photoURL: user.photoURL || defaultPhotoURL
             });
@@ -20,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Initialize game stats if they don't exist
                 if (typeof userData.xu === 'undefined') {
-                    updates.xu = 500;
+                    updates.xu = 0;
                 }
                 if (typeof userData.power === 'undefined') {
                     updates.power = 10;
