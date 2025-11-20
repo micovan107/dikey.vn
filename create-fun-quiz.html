@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Đố vui</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/create-quiz.css">
+</head>
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 0;
+            }
+            #wall-posts-container {
+                padding: 10px;
+                box-sizing: border-box;
+            }
+            .left-sidebar,
+            .right-sidebar {
+                display: none;
+            }
+            .main-container {
+                display: block;
+                padding: 0 !important;
+            }
+            .main-content {
+                padding: 0 15px;
+            }
+            #posts-container {
+                padding: 0;
+            }
+            header h1 {
+                font-size: 1.25rem;
+            }
+            nav#nav-links a,
+            nav#nav-links button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .nav-avatar {
+                width: 28px;
+                height: 28px;
+            }
+                        .nav-user-name {
+    display: none !important;
+  }
+  .nav-user-profile .dropdown-content {
+    right: 0;
+    left: auto;
+  }
+        }
+            </style>
+<body>
+    <script src="js/header.js"></script>
+    <script src="js/auth.js"></script>
+    <main>
+        <h3>Tạo Đố vui của riêng bạn và đố mọi người</h3>
+        <form id="create-quiz-form">
+            <div class="form-group">
+                <label for="quiz-question">Câu hỏi</label>
+                <textarea id="quiz-question" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="quiz-type">Loại câu hỏi</label>
+                <select id="quiz-type" required>
+                    <option value="multiple-choice" selected>Trắc nghiệm</option>
+                    <option value="fill-in-the-blank">Điền từ</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quiz-image">Ảnh (tùy chọn)</label>
+                <input type="file" id="quiz-image" accept="image/*">
+            </div>
+            <div id="answers-container">
+                
+            </div>
+            <button type="button" id="add-answer-button">Thêm đáp án</button>
+            <button type="submit">Đăng</button>
+        </form>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/create-fun-quiz.js"></script>
+</body>
+
+</html>
