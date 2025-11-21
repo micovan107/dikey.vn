@@ -1,12 +1,24 @@
 /* CSS for quiz-detail.html */
 main {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 20px auto;
     padding: 20px;
     background-color: #fff;
-    
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.quiz-page-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.main-column {
+    width: 50%;
+}
+
+.side-column {
+    width: 24%;
 }
 
 #quiz-detail-container h1 {
@@ -73,6 +85,72 @@ main {
 
 #author-info span {
     font-weight: bold;
-
 }
 
+#correct-solvers h3, #incorrect-solvers h3 {
+    font-size: 1.2em;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.solver {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.solver img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.mobile-solver-buttons {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .quiz-page-container {
+        flex-direction: column;
+    }
+
+    .main-column, .side-column {
+        width: 100%;
+    }
+
+    .side-column {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.8);
+        z-index: 1000;
+        overflow-y: auto;
+        padding: 20px;
+        color: #fff;
+    }
+
+    .side-column.active {
+        display: block;
+    }
+
+    .mobile-solver-buttons {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        font-size: 2em;
+        color: #fff;
+        cursor: pointer;
+        z-index: 1001;
+    }
+}
