@@ -35,6 +35,12 @@ createQuizForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const question = document.getElementById('quiz-question').value;
+    const subjectElement = document.getElementById('quiz-subject');
+    const subjectId = subjectElement.value;
+    const subjectName = subjectElement.options[subjectElement.selectedIndex].text;
+    const gradeElement = document.getElementById('quiz-grade');
+    const gradeId = gradeElement.value;
+    const gradeName = gradeElement.options[gradeElement.selectedIndex].text;
     const imageFile = document.getElementById('quiz-image').files[0];
     const answerInputs = document.querySelectorAll('.answer-input');
     const correctAnswer = document.querySelector('input[name="correct-answer"]:checked').value;
@@ -43,6 +49,19 @@ createQuizForm.addEventListener('submit', async (e) => {
     answerInputs.forEach(input => {
         answers.push(input.value);
     });
+
+    const quizData = {
+        authorId: currentUser.uid,
+        question: question,
+        answers: answers,
+        correctAnswer: parseInt(correctAnswer),
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        solvers: [],
+        subjectId: subjectId,
+        subjectName: subjectName,
+        gradeId: gradeId,
+        gradeName: gradeName
+    };
 
     let imageUrl = null;
     if (imageFile) {
@@ -66,18 +85,12 @@ createQuizForm.addEventListener('submit', async (e) => {
             return;
         }
     }
+    quizData.imageUrl = imageUrl;
+
 
     try {
         const newQuizRef = db.ref('quizzes').push();
-        await newQuizRef.set({
-            authorId: currentUser.uid,
-            question: question,
-            imageUrl: imageUrl,
-            answers: answers,
-            correctAnswer: parseInt(correctAnswer),
-            createdAt: firebase.database.ServerValue.TIMESTAMP,
-            solvers: []
-        });
+        await newQuizRef.set(quizData);
         alert("Tạo trắc nghiệm thành công!");
         window.location.href = 'quiz-list.html';
     } catch (error) {

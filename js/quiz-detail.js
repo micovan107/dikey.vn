@@ -54,6 +54,39 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
     }
 
+    function loadSolvers(solverIds, containerId, title) {
+        const container = document.getElementById(containerId).querySelector('div');
+        container.innerHTML = `<h3>${title}</h3>`;
+    
+        if (!solverIds) {
+        container.innerHTML += '<p style="color: #fff;">Chưa có ai.</p>';
+        return;
+    }
+
+    const solverUids = Object.values(solverIds);
+    if (solverUids.length === 0) {
+        container.innerHTML += '<p style="color: #fff;">Chưa có ai.</p>';
+        return;
+    }
+    
+    
+        solverUids.forEach(uid => {
+            const userRef = db.ref(`users/${uid}`);
+            userRef.once("value").then(snapshot => {
+                if (snapshot.exists()) {
+                    const user = snapshot.val();
+                    const solverDiv = document.createElement('div');
+                    solverDiv.classList.add('solver');
+                    solverDiv.innerHTML = `
+                        <img src="${user.photoURL || 'default-avatar.png'}" alt="${user.displayName}">
+                        <span>${user.displayName}</span>
+                    `;
+                    container.appendChild(solverDiv);
+                }
+            });
+        });
+    }
+
     function displayQuizDetail(quiz, quizId) {
         quizDetailContainer.innerHTML = ""; // Clear previous content
 
@@ -68,6 +101,17 @@ document.addEventListener("DOMContentLoaded", function () {
             quizDetailContainer.appendChild(image);
         }
 
+        if (quiz.type === 'fill-in-the-blank') {
+            displayFillInTheBlank(quiz, quizId);
+        } else {
+            displayMultipleChoice(quiz, quizId);
+        }
+
+        loadSolvers(quiz.solvers, 'correct-solvers-container', '');
+        loadSolvers(quiz.incorrectSolvers, 'incorrect-solvers-container', '');
+    }
+
+    function displayMultipleChoice(quiz, quizId) {
         const answerOptions = document.createElement('div');
         answerOptions.classList.add('answer-options');
 
@@ -80,7 +124,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         quizDetailContainer.appendChild(answerOptions);
 
-        if (quiz.authorId === currentUser.uid || (quiz.solvers && Object.values(quiz.solvers).includes(currentUser.uid))) {
+        const hasSolved = quiz.solvers && Object.values(quiz.solvers).includes(currentUser.uid);
+        const hasAnsweredIncorrectly = quiz.incorrectSolvers && Object.values(quiz.incorrectSolvers).includes(currentUser.uid);
+
+        if (quiz.authorId === currentUser.uid || hasSolved || hasAnsweredIncorrectly) {
             // Disable buttons if user is author or has already solved
             answerOptions.querySelectorAll('button').forEach(button => {
                 button.disabled = true;
@@ -92,15 +139,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 const authorMessage = document.createElement('p');
                 authorMessage.textContent = "Bạn không thể tự giải bài của mình.";
                 quizDetailContainer.appendChild(authorMessage);
-            } else {
+            } else if (hasSolved) {
                 const solvedMessage = document.createElement('p');
                 solvedMessage.textContent = "Bạn đã làm bài này rồi.";
                 quizDetailContainer.appendChild(solvedMessage);
+            } else if (hasAnsweredIncorrectly) {
+                const incorrectMessage = document.createElement('p');
+                incorrectMessage.textContent = "Bạn đã trả lời sai và không thể làm lại.";
+                quizDetailContainer.appendChild(incorrectMessage);
             }
         } else {
             answerOptions.addEventListener('click', async (e) => {
                 if (e.target.tagName === 'BUTTON') {
                     const selectedAnswer = parseInt(e.target.dataset.index);
+                    const quizRef = db.ref(`quizzes/${quizId}`);
+
                     if (selectedAnswer === quiz.correctAnswer) {
                         // Correct answer
                         const userRef = db.ref(`users/${currentUser.uid}`);
@@ -111,17 +164,84 @@ document.addEventListener("DOMContentLoaded", function () {
                             return currentData;
                         });
 
-                        const quizRef = db.ref(`quizzes/${quizId}`);
-                        await quizRef.child('solvers').push(currentUser.uid);
+                        await quizRef.child('solvers').push(currentUseeer.uid);
 
                         alert("Chính xác! Bạn được cộng 20 xu.");
                     } else {
                         // Incorrect answer
+                        await quizRef.child('incorrectSolvers').push(currentUser.uid);
                         alert("Sai rồi, thử lại lần sau nhé!");
                     }
                     // Reload to show updated state
                     window.location.reload();
                 }
+            });
+        }
+    }
+
+    function displayFillInTheBlank(quiz, quizId) {
+        const answerForm = document.createElement('form');
+        answerForm.id = 'fill-in-the-blank-form';
+        answerForm.innerHTML = `
+            <div class="form-group">
+                <label for="user-answer">Câu trả lời của bạn</label>
+                <input type="text" id="user-answer" required>
+            </div>
+            <button type="submit">Kiểm tra</button>
+        `;
+        quizDetailContainer.appendChild(answerForm);
+
+        const hasSolved = quiz.solvers && Object.values(quiz.solvers).includes(currentUser.uid);
+        const hasAnsweredIncorrectly = quiz.incorrectSolvers && Object.values(quiz.incorrectSolvers).includes(currentUser.uid);
+
+        if (quiz.authorId === currentUser.uid || hasSolved || hasAnsweredIncorrectly) {
+            answerForm.querySelector('button').disabled = true;
+            answerForm.querySelector('input').disabled = true;
+
+            if (quiz.authorId === currentUser.uid) {
+                const authorMessage = document.createElement('p');
+                authorMessage.textContent = "Bạn không thể tự giải bài của mình.";
+                quizDetailContainer.appendChild(authorMessage);
+                const correctAnswers = document.createElement('p');
+                correctAnswers.textContent = `Đáp án đúng: ${quiz.correctAnswers.join(', ')}`;
+                quizDetailContainer.appendChild(correctAnswers);
+            } else if (hasSolved) {
+                const solvedMessage = document.createElement('p');
+                solvedMessage.textContent = "Bạn đã làm bài này rồi.";
+                quizDetailContainer.appendChild(solvedMessage);
+                const correctAnswers = document.createElement('p');
+                correctAnswers.textContent = `Đáp án đúng: ${quiz.correctAnswers.join(', ')}`;
+                quizDetailContainer.appendChild(correctAnswers);
+            } else if (hasAnsweredIncorrectly) {
+                const incorrectMessage = document.createElement('p');
+                incorrectMessage.textContent = "Bạn đã trả lời sai và không thể làm lại.";
+                quizDetailContainer.appendChild(incorrectMessage);
+            }
+
+        } else {
+            answerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const userAnswer = document.getElementById('user-answer').value.trim().toLowerCase();
+                const isCorrect = quiz.correctAnswers.some(answer => answer.toLowerCase() === userAnswer);
+                const quizRef = db.ref(`quizzes/${quizId}`);
+
+                if (isCorrect) {
+                    const userRef = db.ref(`users/${currentUser.uid}`);
+                    userRef.transaction((currentData) => {
+                        if (currentData) {
+                            currentData.xu = (currentData.xu || 0) + 20;
+                        }
+                        return currentData;
+                    });
+
+                    await quizRef.child('solvers').push(currentUser.uid);
+
+                    alert("Chính xác! Bạn được cộng 20 xu.");
+                } else {
+                    await quizRef.child('incorrectSolvers').push(currentUser.uid);
+                    alert("Sai rồi, thử lại lần sau nhé!");
+                }
+                window.location.reload();
             });
         }
     }
@@ -173,4 +293,24 @@ document.addEventListener("DOMContentLoaded", function () {
     // Event listener for the next quiz button
     nextQuizBtn.addEventListener("click", loadRandomQuiz);
 
+    // Mobile modal logic
+    const showCorrectBtn = document.getElementById('show-correct-solvers');
+    const showIncorrectBtn = document.getElementById('show-incorrect-solvers');
+    const correctSolversContainer = document.getElementById('correct-solvers-container');
+    const incorrectSolversContainer = document.getElementById('incorrect-solvers-container');
+
+    function setupModal(button, container) {
+        const closeBtn = container.querySelector('.close-btn');
+
+        button.addEventListener('click', () => {
+            container.classList.add('active');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            container.classList.remove('active');
+        });
+    }
+
+    setupModal(showCorrectBtn, correctSolversContainer);
+    setupModal(showIncorrectBtn, incorrectSolversContainer);
 });
