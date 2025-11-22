@@ -291,8 +291,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Functions for Sub-Admin Management
     function loadSubAdmins() {
-        const subAdminsRef = database.ref('subAdmins');
+        const subAdminsRef = db.ref('subAdmins');
         subAdminsRef.on('value', (snapshot) => {
+            const subAdminList = document.querySelector('#sub-admins-table tbody');
             subAdminList.innerHTML = '';
             snapshot.forEach(childSnapshot => {
                 const subAdmin = childSnapshot.val();
@@ -300,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tr>
                         <td data-label="Email">${subAdmin.email}</td>
                         <td data-label="Hành động">
-                            <button class="btn-danger delete-sub-admin-btn" data-id="${childSnapshot.key}">Xóa</button>
+                            <button onclick="deleteSubAdmin('${childSnapshot.key}')" class="btn btn-danger">Xóa</button>
                         </td>
                     </tr>
                 `;
@@ -309,54 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Load Assignments
-    function loadAssignments() {
-        const postsRef = database.ref('posts').orderByChild('createdAt');
-        postsRef.on('value', (snapshot) => {
-            const assignmentsTableBody = document.querySelector('#assignments-table tbody');
-            assignmentsTableBody.innerHTML = '';
-            snapshot.forEach(childSnapshot => {
-                const post = childSnapshot.val();
-                const row = `
-                    <tr>
-                        <td data-label="Tiêu đề">${post.title}</td>
-                        <td data-label="Ngày tạo">${new Date(post.createdAt).toLocaleString()}</td>
-                        <td data-label="Hành động">
-                            <button class="btn-primary edit-post-btn" data-id="${childSnapshot.key}">Sửa</button>
-                            <button class="btn-danger delete-post-btn" data-id="${childSnapshot.key}">Xóa</button>
-                        </td>
-                    </tr>
-                `;
-                assignmentsTableBody.innerHTML += row;
-            });
-        });
-    }
 
-    // Load Solutions
-    function loadSolutions() {
-        const solutionsRef = database.ref('solutions').orderByChild('createdAt');
-        solutionsRef.on('value', (snapshot) => {
-            const solutionsTableBody = document.querySelector('#solutions-table tbody');
-            solutionsTableBody.innerHTML = '';
-            snapshot.forEach(childSnapshot => {
-                const solution = childSnapshot.val();
-                const row = `
-                    <tr>
-                        <td data-label="Bài đăng gốc">${solution.postTitle}</td>
-                        <td data-label="Người giải">${solution.authorName}</td>
-                        <td data-label="Nội dung">${solution.text.substring(0, 50)}...</td>
-                        <td data-label="Ảnh"><img src="${solution.imageUrl || ''}" alt="Ảnh lời giải" style="max-width: 100px;"></td>
-                        <td data-label="Ngày giải">${new Date(solution.createdAt).toLocaleString()}</td>
-                        <td data-label="Hành động">
-                            <button class="btn-primary edit-solution-btn" data-post-id="${solution.postId}" data-solution-id="${childSnapshot.key}">Sửa</button>
-                            <button class="btn-danger delete-solution-btn" data-id="${childSnapshot.key}">Xóa</button>
-                        </td>
-                    </tr>
-                `;
-                solutionsTableBody.innerHTML += row;
-            });
-        });
-    }
 
     // Event Delegation for delete/edit buttons
     function addSubAdmin() {
