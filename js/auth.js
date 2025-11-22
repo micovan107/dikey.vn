@@ -57,6 +57,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (navLinks) {
                 navLinks.innerHTML = `
+                    <form class="search-form" id="search-form">
+                        <input type="text" id="search-input" placeholder="Tìm kiếm...">
+                        <button type="submit"><i class="fas fa-search"></i></button>
+                    </form>
                     <a href="post.html" class="btn">Đăng bài</a>
                     <div class="notification-icon" id="notification-icon">
                         <i class="fas fa-bell"></i>
@@ -81,6 +85,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 `;
+
+                document.getElementById('search-form').addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    const query = document.getElementById('search-input').value;
+                    if (query) {
+                        window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+                    }
+                });
             }
 
                 // Thêm cấu trúc modal vào body

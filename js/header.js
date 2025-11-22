@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", () => {
     const headerHTML = `
         <header>
@@ -18,4 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
         </header>
     `;
     document.body.insertAdjacentHTML('afterbegin', headerHTML);
+
+    const adminEmails = ['micovan108@gmail.com', 'micovan105@gmail.com'];
+    firebase.auth().onAuthStateChanged(user => {
+        if (user && adminEmails.includes(user.email)) {
+            const navLinks = document.getElementById('nav-links');
+            const adminLink = document.createElement('a');
+            adminLink.href = 'admin.html';
+            adminLink.textContent = 'Admin';
+            navLinks.appendChild(adminLink);
+        }
+    });
 });
