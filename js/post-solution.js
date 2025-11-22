@@ -173,9 +173,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 authorEmail: user.email,
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             }).then(() => {
-                db.ref(`posts/${postId}/replyCount`).transaction((currentCount) => (currentCount || 0) + 1);
-                db.ref(`users/${user.uid}/score`).transaction((currentScore) => (currentScore || 0) + 5);
+                const replyCountUpdate = db.ref(`posts/${postId}/replyCount`).transaction((currentCount) => (currentCount || 0) + 1);
+                const scoreUpdate = db.ref(`users/${user.uid}/score`).transaction((currentScore) => (currentScore || 0) + 5);
+
+                return Promise.all([replyCountUpdate, scoreUpdate]);
+            }).then(() => {
                 window.location.href = `detail.html?id=${postId}`;
+
             }).catch(error => {
                 console.error("Lỗi khi gửi lời giải: ", error);
                 alert("Có lỗi xảy ra, vui lòng thử lại.");
