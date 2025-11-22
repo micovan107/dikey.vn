@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const resultCard = document.createElement('div');
                 resultCard.className = 'search-result-card';
 
-                const faviconUrl = '/favicon.png'; 
+                const faviconUrl = './favicon.png'; 
                 const domain = window.location.hostname;
 
                 resultCard.innerHTML = `
@@ -102,4 +102,5 @@ document.addEventListener('DOMContentLoaded', () => {
             searchResultsContainer.innerHTML = '<p>Không tìm thấy kết quả nào.</p>';
         }
     }
+
 });
