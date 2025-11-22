@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả tìm kiếm</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<style>
+
+/* ===========================
+   👇 Responsive fix cho mobile
+   =========================== */
+@media (max-width: 768px) {
+
+    /* Fix cho layout cha bị flex bó chiều rộng */
+    .main-container {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .main-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 10px !important;  /* cho đỡ dính sát mép màn hình */
+        box-sizing: border-box !important;
+    }
+
+    /* Thẻ card chính */
+    .search-result-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        margin: 0 0 12px 0 !important;
+        padding: 10px !important;
+        box-sizing: border-box !important;
+        display: block !important;
+        border-radius: 0 !important;
+    }
+
+    /* Tối ưu chữ và icon */
+    .result-title a {
+        font-size: 16px !important;
+        line-height: 1.3;
+    }
+
+    .result-description {
+        font-size: 13px !important;
+    }
+
+    .result-header .result-site-name,
+    .result-header .result-url {
+        font-size: 12px !important;
+    }
+
+    .result-favicon {
+        width: 18px !important;
+        height: 18px !important;
+    }
+                .main-container {
+                display: block; /* Revert to block layout */
+                padding: 0 !important;
+            }
+
+            .left-sidebar,
+            .right-sidebar {
+                display: none; /* Hide sidebars */
+            }
+            .main-content {
+                padding: 0 15px;
+            }
+            #posts-container {
+                padding: 0;
+            }
+            header h1 {
+                font-size: 1.25rem;
+            }
+            nav#nav-links a,
+            nav#nav-links button {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .nav-avatar {
+                width: 28px;
+                height: 28px;
+            }
+            .nav-user-name {
+                display: none !important;
+            }
+            .nav-user-profile .dropdown-content {
+                right: 0;
+                left: auto;
+            }
+}
+
+/* Thêm tối ưu hơn cho siêu nhỏ (điện thoại nhỏ ư ư) */
+@media (max-width: 480px) {
+    .result-title a {
+        font-size: 15px !important;
+    }
+}
+
+
+</style>
+<body>
+    <script src="js/header.js"></script>
+    
+  
+
+    <div class="main-container">
+        <main class="main-content">
+            <h4 class="search-title">Kết quả tìm kiếm cho "<span id="search-query"></span>"</h4>
+            <div id="search-results"></div>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/search.js"></script>
+</body>
+</html>
