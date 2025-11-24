@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 sessionStorage.setItem('viewedPosts', JSON.stringify(viewedPosts));
             }
 
-            document.title = `Chi tiết: ${post.description.substring(0, 50)}...`;
+            document.title = `Dikey.vn: ${post.description.substring(0, 50)}...`;
             const postDate = post.createdAt ? new Date(post.createdAt).toLocaleString('vi-VN') : 'Không rõ ngày';
             let imageHtml = post.imageUrl ? `<img src="${post.imageUrl}" alt="Post image" class="img-fluid rounded my-3">` : '';
 
@@ -296,4 +296,5 @@ document.addEventListener("DOMContentLoaded", () => {
             }).catch(error => console.error("Lỗi gửi bình luận: ", error));
         }
     });
+
 });
