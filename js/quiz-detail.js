@@ -124,10 +124,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
         quizDetailContainer.appendChild(answerOptions);
 
-        const hasSolved = quiz.solvers && Object.values(quiz.solvers).includes(currentUser.uid);
-        const hasAnsweredIncorrectly = quiz.incorrectSolvers && Object.values(quiz.incorrectSolvers).includes(currentUser.uid);
+        const hasSolved = currentUser && quiz.solvers && Object.values(quiz.solvers).includes(currentUser.uid);
+        const hasAnsweredIncorrectly = currentUser && quiz.incorrectSolvers && Object.values(quiz.incorrectSolvers).includes(currentUser.uid);
 
-        if (quiz.authorId === currentUser.uid || hasSolved || hasAnsweredIncorrectly) {
+        if (!currentUser) {
+            answerOptions.querySelectorAll('button').forEach(button => {
+                button.disabled = true;
+            });
+            const loginMessage = document.createElement('p');
+            loginMessage.innerHTML = 'Bạn cần <a href="login.html">đăng nhập</a> để trả lời.';
+            quizDetailContainer.appendChild(loginMessage);
+        } else if (quiz.authorId === currentUser.uid || hasSolved || hasAnsweredIncorrectly) {
             // Disable buttons if user is author or has already solved
             answerOptions.querySelectorAll('button').forEach(button => {
                 button.disabled = true;
@@ -164,7 +171,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             return currentData;
                         });
 
-                        await quizRef.child('solvers').push(currentUseeer.uid);
+                        await quizRef.child('solvers').push(currentUser.uid);
 
                         alert("Chính xác! Bạn được cộng 20 xu.");
                     } else {
@@ -191,10 +198,16 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
         quizDetailContainer.appendChild(answerForm);
 
-        const hasSolved = quiz.solvers && Object.values(quiz.solvers).includes(currentUser.uid);
-        const hasAnsweredIncorrectly = quiz.incorrectSolvers && Object.values(quiz.incorrectSolvers).includes(currentUser.uid);
+        const hasSolved = currentUser && quiz.solvers && Object.values(quiz.solvers).includes(currentUser.uid);
+        const hasAnsweredIncorrectly = currentUser && quiz.incorrectSolvers && Object.values(quiz.incorrectSolvers).includes(currentUser.uid);
 
-        if (quiz.authorId === currentUser.uid || hasSolved || hasAnsweredIncorrectly) {
+        if (!currentUser) {
+            answerForm.querySelector('button').disabled = true;
+            answerForm.querySelector('input').disabled = true;
+            const loginMessage = document.createElement('p');
+            loginMessage.innerHTML = 'Bạn cần <a href="login.html">đăng nhập</a> để trả lời.';
+            quizDetailContainer.appendChild(loginMessage);
+        } else if (quiz.authorId === currentUser.uid || hasSolved || hasAnsweredIncorrectly) {
             answerForm.querySelector('button').disabled = true;
             answerForm.querySelector('input').disabled = true;
 
@@ -275,18 +288,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     auth.onAuthStateChanged((user) => {
-        if (user) {
-            currentUser = user;
-            const quizId = getQuizIdFromUrl();
-            if (quizId) {
-                currentQuizId = quizId;
-                loadQuiz(quizId);
-                fetchAllQuizIds();
-            } else {
-                quizDetailContainer.innerHTML = "<p>No quiz ID found in URL.</p>";
-            }
+        currentUser = user;
+        const quizId = getQuizIdFromUrl();
+        if (quizId) {
+            currentQuizId = quizId;
+            loadQuiz(quizId);
+            fetchAllQuizIds();
         } else {
-            window.location.href = 'login.html';
+            quizDetailContainer.innerHTML = "<p>No quiz ID found in URL.</p>";
         }
     });
 
