@@ -5,6 +5,10 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             title: 'Đề kiểm tra Toán 1 - Đề 1',
             path: 'baikiemtra/toan-1-de1.txt'
+        },
+         {
+            title: 'Đề kiểm tra Toán 1 - Đề 2',
+            path: 'baikiemtra/toan-1-de2.txt'
         }
     ];
 

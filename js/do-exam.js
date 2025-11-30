@@ -67,11 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const optionsRegex = /\*[Ll]ựa chọn\*\s*([\s\S]*?)(?=\*Đáp án\*)/;
                 const answerRegex = /\*Đáp án\*\s*(\[[\s\S]*?\])/;
+                const imageRegex = /\*ảnh\*='([^']*)'/;
 
                 const optionsMatch = part.match(optionsRegex);
                 const answerMatch = part.match(answerRegex);
+                const imageMatch = part.match(imageRegex);
 
-                const questionText = part.replace(optionsRegex, '').replace(answerRegex, '').trim();
+                const questionText = part.replace(optionsRegex, '').replace(answerRegex, '').replace(imageRegex, '').trim();
 
                 if (!questionText) return;
 
@@ -79,7 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     question: questionText,
                     type: questionType,
                     options: [],
-                    answer: null
+                    answer: null,
+                    image: imageMatch ? imageMatch[1] : null
                 };
 
                 if (optionsMatch && optionsMatch[1]) {
@@ -113,6 +116,40 @@ document.addEventListener('DOMContentLoaded', () => {
             const questionText = document.createElement('p');
             questionText.textContent = q.question;
             questionElement.appendChild(questionText);
+
+            if (q.image) {
+                const imageElement = document.createElement('img');
+                imageElement.src = q.image;
+                imageElement.style.maxWidth = '100%';
+                imageElement.style.height = 'auto';
+                imageElement.style.cursor = 'pointer';
+                imageElement.addEventListener('click', () => {
+                    const modal = document.createElement('div');
+                    modal.style.position = 'fixed';
+                    modal.style.top = '0';
+                    modal.style.left = '0';
+                    modal.style.width = '100%';
+                    modal.style.height = '100%';
+                    modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                    modal.style.display = 'flex';
+                    modal.style.justifyContent = 'center';
+                    modal.style.alignItems = 'center';
+                    modal.style.zIndex = '1000';
+
+                    const modalImg = document.createElement('img');
+                    modalImg.src = q.image;
+                    modalImg.style.maxWidth = '90%';
+                    modalImg.style.maxHeight = '90%';
+
+                    modal.appendChild(modalImg);
+                    document.body.appendChild(modal);
+
+                    modal.addEventListener('click', () => {
+                        document.body.removeChild(modal);
+                    });
+                });
+                questionElement.appendChild(imageElement);
+            }
 
             const optionsElement = document.createElement('div');
             optionsElement.classList.add('options');
