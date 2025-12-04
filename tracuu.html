@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WikiLearner — Học nhanh từ Wikipedia</title>
+  <link rel="stylesheet" href="css/tracuu.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+     
+      
+  <div class="container">
+    <h1>WikiLearner</h1>
+    <div class="meta">Tìm & học nhanh cùng WikiLearner</div>
+
+    <div class="search">
+      <div class="search-inputs">
+        <input id="q" placeholder="Nhập từ khóa..." />
+        <select id="lang">
+          <option value="vi">Tiếng Việt</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <button id="btn">Tìm</button>
+    </div>
+
+    <div id="status" class="notice"></div>
+
+    <div id="categories" class="categories" style="display:none"></div>
+
+    <div id="result" class="content" style="display:none"></div>
+
+    <footer>
+     Email: micovan105@gmail.com
+     <br>
+     Liên lạc: 0916512162
+     <div style="margin-top:6px"><a class="small" href="#" id="openPage" target="_blank">Mở trang Wikipedia</a></div>
+    </footer>
+  </div>
+
+<script>
+// Tiny WikiLearner — single-file demo
+// Cách hoạt động (tóm tắt):
+// 1) search -> lấy tựa đề trang phù hợp nhất (action=query&list=search)
+// 2) parse sections -> lấy danh sách sections của trang (action=parse&prop=sections)
+// 3) map sections sang các "mục học" phổ biến (loài, ăn gì, mô tả...)
+// 4) khi chọn mục -> lấy nội dung của section bằng action=parse&prop=text&section=N và hiển thị
+
+const btn = document.getElementById('btn');
+const q = document.getElementById('q');
+const lang = document.getElementById('lang');
+const status = document.getElementById('status');
+const categories = document.getElementById('categories');
+const result = document.getElementById('result');
+const openPage = document.getElementById('openPage');
+
+btn.addEventListener('click', ()=> doSearch());
+q.addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
+
+function setLoading(t){ status.textContent = t; status.classList.add('loading'); }
+function clearLoading(){ status.classList.remove('loading'); }
+
+async function doSearch() {
+    const term = q.value.trim();
+    if (!term) {
+      status.textContent = 'Vui lòng nhập từ khóa.';
+      return;
+    }
+    const lg = lang.value;
+    setLoading('Đang tìm kiếm...');
+    categories.style.display = 'none';
+    result.style.display = 'none';
+    status.style.display = 'block';
+
+    try {
+      // 1) tìm trang phù hợp nhất
+      const searchUrl = `https://${lg}.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=search&srsearch=${encodeURIComponent(term)}&srlimit=5`;
+      const sres = await fetch(searchUrl).then(r => r.json());
+      if (!sres.query.search || sres.query.search.length === 0) {
+        status.textContent = 'Không tìm thấy trang nào phù hợp.';
+        clearLoading();
+        return;
+      }
+      const title = sres.query.search[0].title;
+      status.textContent = `Kết quả cho: "${title}"`;
+      openPage.href = `https://${lg}.wikipedia.org/wiki/${encodeURIComponent(title)}`;
+
+      // 2) lấy danh sách sections
+      const secUrl = `https://${lg}.wikipedia.org/w/api.php?action=parse&format=json&origin=*&page=${encodeURIComponent(title)}&prop=sections`;
+      const secRes = await fetch(secUrl).then(r => r.json());
+      const sections = (secRes.parse && secRes.parse.sections) || [];
+
+      // map các tiêu đề section sang nhóm "mục học" mà người dùng muốn
+      const mapped = ((sections) => {
+        const arr = [];
+        for (const sec of sections) {
+          arr.push({
+            label: sec.line || sec.title || ('Mục ' + sec.index),
+            index: sec.index
+          });
+        }
+        return arr;
+      })(sections);
+
+      categories.innerHTML = '';
+      if (mapped.length > 0) {
+        mapped.forEach(item => {
+          const cat = document.createElement('div');
+          cat.className = 'category';
+          cat.textContent = item.label;
+          cat.addEventListener('click', () => fetchSection(title, item.index));
+          categories.appendChild(cat);
+        });
+        categories.style.display = 'flex';
+      } else {
+        // No sections, maybe show summary?
+        const summaryHtml = await fetchSummary(lg, title);
+        showHtml(summaryHtml, title);
+      }
+
+    } catch (e) {
+      console.error(e);
+      status.textContent = 'Đã có lỗi xảy ra trong quá trình tìm kiếm.';
+    }
+    clearLoading();
+  }
+
+  async function fetchSection(title, secIndex) {
+    const lg = lang.value;
+    setLoading('Đang tải nội dung...');
+    try {
+      const url = `https://${lg}.wikipedia.org/w/api.php?action=parse&format=json&origin=*&page=${encodeURIComponent(title)}&prop=text&section=${secIndex}`;
+      const res = await fetch(url).then(r => r.json());
+      const html = (res.parse && res.parse.text && res.parse.text['*']) || '<p>Không có nội dung cho mục này.</p>';
+      showHtml(html, title);
+      status.textContent = `Đã tải xong.`;
+    } catch (e) {
+      console.error(e);
+      status.textContent = 'Lỗi khi tải nội dung.';
+    }
+    clearLoading();
+  }
+
+  async function fetchSummary(lg, title) {
+    try {
+      const url = `https://${lg}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+      const r = await fetch(url).then(r => r.json());
+      return `<h2>${escapeHtml(r.title || title)}</h2><p>${escapeHtml(r.extract || '')}</p>` + (r.thumbnail ? `<img src="${r.thumbnail.source}" alt="thumb">` : '');
+    } catch (e) {
+      return '<p>Không thể tải tóm tắt.</p>';
+    }
+  }
+
+  function showHtml(html, title) {
+    // hiển thị thô nội dung HTML do Wikipedia trả về.
+    // Cảnh báo: nội dung có thể chứa markup, hình ảnh, link. Để an toàn hơn cho môi trường production,
+    // cần sanitize HTML trước khi hiển thị (library như DOMPurify). Đây là demo.
+    result.innerHTML = html;
+    result.style.display = 'block';
+    openPage.style.display = 'inline-block';
+  }
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    } [c]));
+  }
+
+</script>
+</body>
+</html>
