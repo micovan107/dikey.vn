@@ -126,10 +126,17 @@ button:hover {
     margin-top: 0;
 }
 
-#result img {
+#result img:not(.mwe-math-fallback-image-inline) {
     max-width: 100%;
     height: auto;
     border-radius: 6px;
+}
+
+#result .mwe-math-fallback-image-inline {
+    max-width: 100%;
+    height: auto !important;
+    width: auto;
+    vertical-align: middle;
 }
 
 /* Footer */
