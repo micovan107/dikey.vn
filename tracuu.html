@@ -158,6 +158,34 @@ async function doSearch() {
     // Cảnh báo: nội dung có thể chứa markup, hình ảnh, link. Để an toàn hơn cho môi trường production,
     // cần sanitize HTML trước khi hiển thị (library như DOMPurify). Đây là demo.
     result.innerHTML = html;
+
+    // Xử lý lazy-loaded images của Wikipedia
+    const placeholders = result.querySelectorAll('.lazy-image-placeholder');
+    placeholders.forEach(placeholder => {
+      const imgSrc = placeholder.getAttribute('data-mw-src');
+      if (imgSrc) {
+        const img = document.createElement('img');
+        // Chỉ thêm 'https:' nếu URL bắt đầu bằng '//'
+        img.src = imgSrc.startsWith('//') ? 'https:' + imgSrc : imgSrc;
+        
+        const alt = placeholder.getAttribute('data-alt');
+        if (alt) img.alt = alt;
+
+        const width = placeholder.getAttribute('data-width');
+        if (width) img.width = width;
+
+        const height = placeholder.getAttribute('data-height');
+        if (height) img.height = height;
+
+        // Thêm class để có thể style nếu cần
+        const extraClass = placeholder.getAttribute('data-class');
+        if (extraClass) img.classList.add(...extraClass.split(' '));
+        
+        // Thay thế placeholder bằng ảnh thật
+        placeholder.parentNode.replaceChild(img, placeholder);
+      }
+    });
+
     result.style.display = 'block';
     openPage.style.display = 'inline-block';
   }
