@@ -85,15 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 profileEmail.textContent = userData.email || '';
                 profileScore.textContent = userData.score || 0;
 
-                // Update the new stats
-                const powerEl = document.getElementById('profile-power');
-                const healthEl = document.getElementById('profile-health');
-                const defenseEl = document.getElementById('profile-defense');
-
-                if (powerEl) powerEl.textContent = userData.power || 0;
-                if (healthEl) healthEl.textContent = userData.health || 0;
-                if (defenseEl) defenseEl.textContent = userData.defense || 0;
-
                 profileAvatar.src = userData.photoURL || 'https://via.placeholder.com/150';
 
                 if (userData.averageRating) {
