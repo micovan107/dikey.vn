@@ -203,44 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
         .video-call-active {
             overflow: hidden;
         }
-
-        .pvp-mode-active {
-            cursor: crosshair;
-        }
-
-        @keyframes attacked {
-            0% { transform: scale(1.02); }
-            50% { background-color: rgba(255, 0, 0, 0.4); transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        .chat-message.attacked .message-content {
-            animation: attacked 0.3s ease-out;
-        }
-
-        .health-bar {
-            display: none; /* Hidden by default */
-            width: 90%;
-            height: 4px;
-            background-color: rgba(0,0,0,0.2);
-            border-radius: 2px;
-            margin-top: 4px;
-            margin-left: auto;
-            margin-right: auto;
-            overflow: hidden;
-        }
-
-        .pvp-mode-active .chat-message.received .health-bar {
-            display: block; /* Visible in PvP mode for received messages */
-        }
-
-        .health-bar-inner {
-            height: 100%;
-            width: 100%;
-            background-color: #f04747; /* Red color */
-            transition: width 0.3s ease-in-out;
-            border-radius: 2px;
-        }
     `;
 
     // Thêm CSS cho chế độ điện thoại
@@ -406,31 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const toggleButton = document.getElementById('toggle-chat-list');
             const chatListContainer = document.querySelector('.chat-list-container');
 
-            // PvP Mode Toggle
-            const pvpModeToggle = document.createElement('button');
-            pvpModeToggle.id = 'pvp-mode-toggle';
-            pvpModeToggle.textContent = 'PvP: Tắt';
-            pvpModeToggle.title = 'Toggle PvP Mode';
-            // Basic styling to fit in
-            pvpModeToggle.style.background = 'none';
-            pvpModeToggle.style.border = 'none';
-            pvpModeToggle.style.color = 'white';
-            pvpModeToggle.style.cursor = 'pointer';
-            pvpModeToggle.style.marginRight = '5px';
-
-            const chatBox = chatHeader.querySelector('div'); // This is the container for header buttons
-            chatBox.prepend(pvpModeToggle);
-
-            let pvpModeEnabled = false;
-            pvpModeToggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                pvpModeEnabled = !pvpModeEnabled;
-                pvpModeToggle.textContent = `PvP: ${pvpModeEnabled ? 'Bật' : 'Tắt'}`;
-                document.body.classList.toggle('pvp-mode-active', pvpModeEnabled);
-                // Force re-render of messages to show/hide health bars
-                rerenderAllVisibleMessages();
-            });
-
             chatHeader.addEventListener('click', () => {
                 const chatWidget = document.querySelector('.chat-widget');
                 if (window.innerWidth <= 768) {
@@ -482,19 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
             openChatWindows = [];
         }
     });
-
-function rerenderAllVisibleMessages() {
-    openChatWindows.forEach(chatId => {
-        const chatWindow = document.getElementById(`chat-window-${chatId}`);
-        if (chatWindow) {
-            const messagesContainer = chatWindow.querySelector('.chat-window-body');
-            if (messagesContainer) {
-                messagesContainer.innerHTML = ''; // Clear existing messages
-                loadMessages(chatId, messagesContainer); // Reload messages for the chat
-            }
-        }
-    });
-}
 
     function openGroupCreationWindow() {
         const style = document.createElement('style');
@@ -1305,7 +1229,7 @@ function rerenderAllVisibleMessages() {
             senderPhotoURL: userData.photoURL, // Use the URL from the database
             text: isCurrentUserAdmin ? text : escapeHTML(text),
             timestamp: firebase.database.ServerValue.TIMESTAMP,
-            health: 100 // Initialize health for all new messages
+            reactions: {}
         };
 
         if (replyToMessageId) {
@@ -1578,24 +1502,10 @@ function rerenderAllVisibleMessages() {
 
         const senderNameHtml = messageSide === 'received' && !isConsecutive ? `<div class="message-sender" style="color: ${msg.senderColor || '#000'}"><a href="wall.html?id=${msg.senderId}" target="_blank" style="color: inherit;">${msg.senderName}</a></div>` : '';
 
-        // Add health bar
-        let healthBarHtml = '';
-        if (messageSide === 'received') {
-            const maxHealth = 100;
-            const currentHealth = msg.health !== undefined ? msg.health : maxHealth;
-            const healthPercentage = (currentHealth / maxHealth) * 100;
-            healthBarHtml = `
-                <div class="health-bar">
-                    <div class="health-bar-inner" style="width: ${healthPercentage}%;"></div>
-                </div>
-            `;
-        }
-
         const contentHtml = `
             <div class="message-content">
                 ${senderNameHtml}
                 ${messageBodyHtml}
-                ${healthBarHtml}
                 <div class="message-time">${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                 <div class="message-actions"><i class="fas fa-ellipsis-h"></i></div>
             </div>
@@ -1603,28 +1513,11 @@ function rerenderAllVisibleMessages() {
 
         messageElement.innerHTML = avatarHtml + contentHtml;
 
-        // Listen for clicks to attack if in PvP mode and it's a received message
-        if (messageSide === 'received') {
-            messageElement.addEventListener('click', () => {
-                if (document.body.classList.contains('pvp-mode-active')) {
-                    attackMessage(currentUser.uid, chatId, msg.id);
-                }
-            });
-        }
-
-        // Real-time listener for message data changes (like health)
+        // Real-time listener for message data changes
         const messageRef = db.ref(`messages/${chatId}/${msg.id}`);
         messageRef.on('value', (snapshot) => {
             const updatedMessageData = snapshot.val();
-            if (updatedMessageData) {
-                const healthBarInner = messageElement.querySelector('.health-bar-inner');
-                if (healthBarInner) {
-                    const health = updatedMessageData.health !== undefined ? updatedMessageData.health : 100;
-                    const maxHealth = 100; // Assuming max health is 100
-                    const healthPercentage = (health / maxHealth) * 100;
-                    healthBarInner.style.width = `${healthPercentage}%`;
-                }
-            } else { // Message was deleted from Firebase
+            if (!updatedMessageData) { // Message was deleted from Firebase
                 if (messageElement.parentElement) {
                     messageElement.remove();
                 }
@@ -1726,24 +1619,10 @@ function rerenderAllVisibleMessages() {
 
         const senderNameHtml = messageSide === 'received' && !isConsecutive ? `<div class="message-sender" style="color: ${msg.senderColor || '#000'}"><a href="wall.html?id=${msg.senderId}" target="_blank" style="color: inherit;">${msg.senderName}</a></div>` : '';
 
-        // Add health bar
-        let healthBarHtml = '';
-        if (messageSide === 'received') {
-            const maxHealth = 100;
-            const currentHealth = msg.health !== undefined ? msg.health : maxHealth;
-            const healthPercentage = (currentHealth / maxHealth) * 100;
-            healthBarHtml = `
-                <div class="health-bar">
-                    <div class="health-bar-inner" style="width: ${healthPercentage}%;"></div>
-                </div>
-            `;
-        }
-
         const contentHtml = `
             <div class="message-content">
                 ${senderNameHtml}
                 ${messageBodyHtml}
-                ${healthBarHtml}
                 <div class="message-time">${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                 <div class="message-actions"><i class="fas fa-ellipsis-h"></i></div>
             </div>
@@ -1751,28 +1630,11 @@ function rerenderAllVisibleMessages() {
 
         messageElement.innerHTML = avatarHtml + contentHtml;
 
-        // Listen for clicks to attack if in PvP mode and it's a received message
-        if (messageSide === 'received') {
-            messageElement.addEventListener('click', () => {
-                if (document.body.classList.contains('pvp-mode-active')) {
-                    attackMessage(currentUser.uid, chatId, msg.id);
-                }
-            });
-        }
-
-        // Real-time listener for message data changes (like health)
+        // Real-time listener for message data changes
         const messageRef = db.ref(`messages/${chatId}/${msg.id}`);
         messageRef.on('value', (snapshot) => {
             const updatedMessageData = snapshot.val();
-            if (updatedMessageData) {
-                const healthBarInner = messageElement.querySelector('.health-bar-inner');
-                if (healthBarInner) {
-                    const health = updatedMessageData.health !== undefined ? updatedMessageData.health : 100;
-                    const maxHealth = 100; // Assuming max health is 100
-                    const healthPercentage = (health / maxHealth) * 100;
-                    healthBarInner.style.width = `${healthPercentage}%`;
-                }
-            } else { // Message was deleted from Firebase
+            if (!updatedMessageData) { // Message was deleted from Firebase
                 if (messageElement.parentElement) {
                     messageElement.remove();
                 }
