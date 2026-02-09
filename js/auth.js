@@ -44,7 +44,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     updates.lastLogin = firebase.database.ServerValue.TIMESTAMP;
                     updates.xu = currentXu + 100;
                     userRef.update(updates).then(() => {
-                        alert("Bạn đã được tặng 100 xu vì đăng nhập ngày hôm nay!");
+                        const notificationRef = db.ref(`notifications/${user.uid}`).push();
+                        notificationRef.set({
+                            senderId: 'system',
+                            type: 'bonus',
+                            message: 'Bạn đã nhận được 100 xu thưởng đăng nhập hàng ngày.',
+                            link: `wall.html?id=${user.uid}`,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            read: false
+                        });
                     });
                 } else {
                     updates.lastLogin = firebase.database.ServerValue.TIMESTAMP;
@@ -93,7 +101,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         window.location.href = `search.html?q=${encodeURIComponent(query)}`;
                     }
                 });
-            }
 
                 // Thêm cấu trúc modal vào body
                 const modalHtml = `
@@ -135,6 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 loadNotifications(user.uid);
+            }
         } else {
             navLinks.innerHTML = `
                 <a href="login.html">Đăng nhập</a>
@@ -144,8 +152,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function loadNotifications(userId) {
-        const notificationsRef = db.ref(`notifications/${userId}`);
-        notificationsRef.on('value', async (snapshot) => {
+    const notificationsRef = db.ref(`notifications/${userId}`);
+    notificationsRef.off('value');
+    notificationsRef.on('value', async (snapshot) => {
             const notifications = snapshot.val();
             const notificationModalBody = document.getElementById('notification-modal-body');
             const notificationCount = document.getElementById('notification-count');
@@ -167,11 +176,18 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                         const time = new Date(notification.timestamp).toLocaleString('vi-VN');
 
-                        // Fetch sender's name
-                        const senderRef = db.ref(`users/${notification.senderId}`);
-                        const senderSnapshot = await senderRef.once('value');
-                        const senderData = senderSnapshot.val();
-                        const senderName = senderData ? senderData.displayName : 'Một người dùng';
+                        let senderName = 'Một người dùng';
+                        if (notification.senderId === 'system') {
+                            senderName = 'Hệ thống <i class="fas fa-robot" style="color: #007bff;"></i>';
+                        } else {
+                            // Fetch sender's name
+                            const senderRef = db.ref(`users/${notification.senderId}`);
+                            const senderSnapshot = await senderRef.once('value');
+                            const senderData = senderSnapshot.val();
+                            if (senderData) {
+                                senderName = senderData.displayName;
+                            }
+                        }
                         notificationItem.innerHTML = `<a href="${notification.link}"><div><strong>${senderName}</strong> ${notification.message}</div><small>${time}</small></a>`;
 
                         notificationItem.addEventListener('click', () => window.location.href = notification.link);
