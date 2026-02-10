@@ -69,6 +69,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let selectedCategory = null;
     let selectedGrade = null;
+    let postsToLoad = 20;
+    let allPosts = [];
+    let loadMoreButton = null;
 
     function showSkeletonLoaders() {
         postsContainer.innerHTML = skeletonLoader.repeat(5);
@@ -83,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             selectedCategory = null;
             selectedGrade = null;
+            postsToLoad = 20;
             updateActiveFilters();
             fetchPosts();
         });
@@ -109,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 e.preventDefault();
                 const clickedFilter = `category:${category}`;
                 selectedCategory = selectedCategory === clickedFilter ? null : clickedFilter;
+                postsToLoad = 20;
                 updateActiveFilters();
                 fetchPosts();
             });
@@ -128,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 e.preventDefault();
                 const clickedFilter = `grade:${gradeValue}`;
                 selectedGrade = selectedGrade === clickedFilter ? null : clickedFilter;
+                postsToLoad = 20;
                 updateActiveFilters();
                 fetchPosts();
             });
@@ -206,98 +212,123 @@ document.addEventListener("DOMContentLoaded", () => {
         let postsQuery = db.ref("posts").orderByChild("createdAt");
 
         postsQuery.on("value", (snapshot) => {
-            postsContainer.innerHTML = "";
             if (!snapshot.exists()) {
                 postsContainer.innerHTML = "<div class='empty-state'><i class='fas fa-folder-open'></i><p>Chưa có bài tập nào.</p></div>";
                 return;
             }
 
-            const posts = [];
+            allPosts = [];
             snapshot.forEach((childSnapshot) => {
                 const post = childSnapshot.val();
                 post.id = childSnapshot.key;
-                posts.push(post);
+                allPosts.push(post);
             });
 
-            let filteredPosts = posts;
-
-            if (selectedCategory) {
-                const [, value] = selectedCategory.split(':');
-                filteredPosts = filteredPosts.filter(p => {
-                    const postCategory = categoryMap[p.category] || p.category;
-                    return postCategory === value;
-                });
-            }
-
-            if (selectedGrade) {
-                const [, value] = selectedGrade.split(':');
-                filteredPosts = filteredPosts.filter(p => p.grade === value);
-            }
-
-            filteredPosts.reverse();
-
-            if (filteredPosts.length === 0) {
-                postsContainer.innerHTML = "<div class='empty-state'><i class='fas fa-folder-open'></i><p>Chưa có bài tập nào trong mục này.</p></div>";
-                return;
-            }
-
-            filteredPosts.forEach(async (post) => {
-                const postElement = document.createElement("div");
-                postElement.classList.add("post");
-                postElement.style.animation = 'fadeIn 0.5s ease-in-out';
-
-                const postDate = post.createdAt ? new Date(post.createdAt).toLocaleString('vi-VN') : 'Không rõ ngày';
-
-                const userRef = db.ref(`users/${post.authorId}`);
-                const userSnapshot = await userRef.get();
-                const author = userSnapshot.val() || {};
-                const authorAvatar = author.photoURL || 'https://i.pravatar.cc/40';
-
-                let imageHtml = '';
-                if (post.imageUrl) {
-                    imageHtml = `<a href="detail.html?id=${post.id}"><img src="${post.imageUrl}" alt="Post image" class="post-image"></a>`;
-                }
-
-                const displayCategory = categoryMap[post.category] || post.category;
-
-                postElement.innerHTML = `
-                    <div class="post-header">
-                        <a href="wall.html?id=${post.authorId}">
-                            <img src="${authorAvatar}" alt="Avatar" class="post-avatar">
-                        </a>
-                        <div class="post-info">
-                            <p class="post-meta">Đăng bởi <a href="wall.html?id=${post.authorId}">${author.displayName || author.email}</a> • ${postDate}</p>
-                            <p class="post-category">Môn: ${displayCategory}</p>
-                        </div>
-                    </div>
-                    <div class="post-content">
-                        <p>${post.description ? post.description.substring(0, 200) : ''}...</p>
-                        ${imageHtml}
-                    </div>
-                    <div class="post-footer">
-                         <div class="post-stats">
-                            <span><i class="far fa-eye"></i> ${post.viewCount || 0} Lượt xem</span>
-                            <span><i class="far fa-comments"></i> ${post.replyCount || 0} Lời giải</span>
-                        </div>
-                        <a href="detail.html?id=${post.id}" class="btn btn-primary btn-sm">Xem chi tiết</a>
-                    </div>
-                `;
-
-                const postContent = postElement.querySelector('.post-content');
-                if(postContent){
-                    postContent.style.cursor = 'pointer';
-                    postContent.addEventListener('click', (e) => {
-                        if(e.target.tagName.toLowerCase() !== 'img' && e.target.closest('a') === null) {
-                            window.location.href = `detail.html?id=${post.id}`;
-                        }
-                    });
-                }
-
-                postsContainer.appendChild(postElement);
-            });
+            allPosts.reverse();
+            postsToLoad = 20;
+            displayPosts();
         }, (error) => {
             console.error("Lỗi tải bài đăng: ", error);
             postsContainer.innerHTML = "<div class='empty-state error'><i class='fas fa-exclamation-triangle'></i><p>Đã xảy ra lỗi khi tải bài tập.</p></div>";
         });
+    }
+
+    function displayPosts() {
+        postsContainer.innerHTML = "";
+
+        let filteredPosts = allPosts;
+
+        if (selectedCategory) {
+            const [, value] = selectedCategory.split(':');
+            filteredPosts = filteredPosts.filter(p => {
+                const postCategory = categoryMap[p.category] || p.category;
+                return postCategory === value;
+            });
+        }
+
+        if (selectedGrade) {
+            const [, value] = selectedGrade.split(':');
+            filteredPosts = filteredPosts.filter(p => p.grade === value);
+        }
+
+        if (filteredPosts.length === 0) {
+            postsContainer.innerHTML = "<div class='empty-state'><i class='fas fa-folder-open'></i><p>Chưa có bài tập nào trong mục này.</p></div>";
+            if (loadMoreButton) {
+                loadMoreButton.remove();
+            }
+            return;
+        }
+
+        const postsToShow = filteredPosts.slice(0, postsToLoad);
+
+        postsToShow.forEach(async (post) => {
+            const postElement = document.createElement("div");
+            postElement.classList.add("post");
+            postElement.style.animation = 'fadeIn 0.5s ease-in-out';
+
+            const postDate = post.createdAt ? new Date(post.createdAt).toLocaleString('vi-VN') : 'Không rõ ngày';
+
+            const userRef = db.ref(`users/${post.authorId}`);
+            const userSnapshot = await userRef.get();
+            const author = userSnapshot.val() || {};
+            const authorAvatar = author.photoURL || 'https://i.pravatar.cc/40';
+
+            let imageHtml = '';
+            if (post.imageUrl) {
+                imageHtml = `<a href="detail.html?id=${post.id}"><img src="${post.imageUrl}" alt="Post image" class="post-image"></a>`;
+            }
+
+            const displayCategory = categoryMap[post.category] || post.category;
+
+            postElement.innerHTML = `
+                <div class="post-header">
+                    <a href="wall.html?id=${post.authorId}">
+                        <img src="${authorAvatar}" alt="Avatar" class="post-avatar">
+                    </a>
+                    <div class="post-info">
+                        <p class="post-meta">Đăng bởi <a href="wall.html?id=${post.authorId}">${author.displayName || author.email}</a> • ${postDate}</p>
+                        <p class="post-category">Môn: ${displayCategory}</p>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <p>${post.description ? post.description.substring(0, 200) : ''}...</p>
+                    ${imageHtml}
+                </div>
+                <div class="post-footer">
+                     <div class="post-stats">
+                        <span><i class="far fa-eye"></i> ${post.viewCount || 0} Lượt xem</span>
+                        <span><i class="far fa-comments"></i> ${post.replyCount || 0} Lời giải</span>
+                    </div>
+                    <a href="detail.html?id=${post.id}" class="btn btn-primary btn-sm">Xem chi tiết</a>
+                </div>
+            `;
+
+            const postContent = postElement.querySelector('.post-content');
+            if(postContent){
+                postContent.style.cursor = 'pointer';
+                postContent.addEventListener('click', (e) => {
+                    if(e.target.tagName.toLowerCase() !== 'img' && e.target.closest('a') === null) {
+                        window.location.href = `detail.html?id=${post.id}`;
+                    }
+                });
+            }
+
+            postsContainer.appendChild(postElement);
+        });
+
+        if (loadMoreButton) {
+            loadMoreButton.remove();
+        }
+
+        if (filteredPosts.length > postsToLoad) {
+            loadMoreButton = document.createElement('button');
+            loadMoreButton.textContent = 'Xem thêm';
+            loadMoreButton.classList.add('btn', 'btn-secondary', 'btn-block', 'mt-3');
+            loadMoreButton.addEventListener('click', () => {
+                postsToLoad += 20;
+                displayPosts();
+            });
+            document.getElementById('load-more-container').appendChild(loadMoreButton);
+        }
     }
 });
