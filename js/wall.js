@@ -106,134 +106,89 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadWallPosts(userId) {
         const postsRef = db.ref('wall_posts').orderByChild('uid').equalTo(userId);
-            postsRef.on('value', (snapshot) => {
-                wallPostsContainer.innerHTML = '';
-                if (!snapshot.exists()) {
-                    wallPostsContainer.innerHTML = '<p>Chưa có bài đăng nào trên tường.</p>';
-                    return;
-                }
-                snapshot.forEach((childSnapshot) => {
-                    const post = childSnapshot.val();
-                    const postElement = createWallPostElement(post, childSnapshot.key);
-                    wallPostsContainer.prepend(postElement);
-                });
-            });
-        }
+        postsRef.on('child_added', (snapshot) => {
+            const post = snapshot.val();
+            const postElement = createWallPostElement(post, snapshot.key);
+            wallPostsContainer.prepend(postElement);
+        });
+    }
 
-        function loadForumPosts(userId) {
-            const userPostsRef = db.ref('posts').orderByChild('userId').equalTo(userId);
-            userPostsRef.on('value', (snapshot) => {
-                userPostsList.innerHTML = '';
-                if (!snapshot.exists()) {
-                    userPostsList.innerHTML = '<p>Chưa có bài đăng diễn đàn nào.</p>';
-                    return;
-                }
-                snapshot.forEach((childSnapshot) => {
-                    const post = childSnapshot.val();
-                    const postId = childSnapshot.key;
-                    const postElement = document.createElement('div');
-                    postElement.classList.add('post-item-mini');
-                    postElement.innerHTML = `<h4><a href="detail.html?id=${postId}">${post.title}</a></h4><p>Môn học: ${post.subject}</p>`;
-                    userPostsList.appendChild(postElement);
-                });
-            });
-        }
+    function loadForumPosts(userId) {
+        const userPostsRef = db.ref('posts').orderByChild('userId').equalTo(userId);
+        userPostsRef.on('child_added', (snapshot) => {
+            const post = snapshot.val();
+            const postId = snapshot.key;
+            const postElement = document.createElement('div');
+            postElement.classList.add('post-item-mini');
+            postElement.innerHTML = `<h4><a href="detail.html?id=${postId}">${post.title}</a></h4><p>Môn học: ${post.subject}</p>`;
+            userPostsList.appendChild(postElement);
+        });
+    }
 
-        function loadAchievements() {
-            const achievementsRef = db.ref('achievements');
-            achievementsRef.on('value', (snapshot) => {
-                achievementsList.innerHTML = '';
-                if (!snapshot.exists()) {
-                    achievementsList.innerHTML = '<p>Chưa có thành tích nào.</p>';
-                    return;
-                }
-                snapshot.forEach((childSnapshot) => {
-                    const achievement = childSnapshot.val();
-                    const achievementElement = document.createElement('div');
-                    achievementElement.classList.add('achievement-item');
-                    achievementElement.innerHTML = `<i class="${achievement.icon}"></i><div><h4>${achievement.title}</h4><p>${achievement.description}</p></div>`;
-                    achievementsList.appendChild(achievementElement);
-                });
-            });
-        }
+    function loadAchievements() {
+        const achievementsRef = db.ref('achievements');
+        achievementsRef.on('child_added', (snapshot) => {
+            const achievement = snapshot.val();
+            const achievementElement = document.createElement('div');
+            achievementElement.classList.add('achievement-item');
+            achievementElement.innerHTML = `<i class="${achievement.icon}"></i><div><h4>${achievement.title}</h4><p>${achievement.description}</p></div>`;
+            achievementsList.appendChild(achievementElement);
+        });
+    }
 
-        function loadFriends(userId) {
-            const friendsRef = db.ref(`users/${userId}/friends`);
-            friendsRef.on('value', snapshot => {
-                const friendsList = document.getElementById('friends-list');
-                friendsList.innerHTML = '';
-                if (snapshot.exists()) {
-                    snapshot.forEach(friendSnap => {
-                        const friendId = friendSnap.key;
-                        db.ref(`users/${friendId}`).once('value', userSnap => {
-                            const userData = userSnap.val();
-                            if (userData) {
-                                const friendElement = createUserItemElement(friendId, userData);
-                                friendsList.appendChild(friendElement);
-                            }
-                        });
-                    });
-                } else {
-                    friendsList.innerHTML = '<p>Chưa có bạn bè nào.</p>';
+    function loadFriends(userId) {
+        const friendsRef = db.ref(`users/${userId}/friends`);
+        friendsRef.on('child_added', (snapshot) => {
+            const friendId = snapshot.key;
+            db.ref(`users/${friendId}`).once('value', userSnap => {
+                const userData = userSnap.val();
+                if (userData) {
+                    const friendElement = createUserItemElement(friendId, userData);
+                    document.getElementById('friends-list').appendChild(friendElement);
                 }
             });
-        }
+        });
+    }
 
-        function loadFollowers(userId) {
-            const followersRef = db.ref(`users/${userId}/followers`);
-            followersRef.on('value', snapshot => {
-                const followersList = document.getElementById('followers-list');
-                followersList.innerHTML = '';
-                if (snapshot.exists()) {
-                    snapshot.forEach(followerSnap => {
-                        const followerId = followerSnap.key;
-                        db.ref(`users/${followerId}`).once('value', userSnap => {
-                            const userData = userSnap.val();
-                            if (userData) {
-                                const followerElement = createUserItemElement(followerId, userData);
-                                followersList.appendChild(followerElement);
-                            }
-                        });
-                    });
-                } else {
-                    followersList.innerHTML = '<p>Chưa có người theo dõi nào.</p>';
+    function loadFollowers(userId) {
+        const followersRef = db.ref(`users/${userId}/followers`);
+        followersRef.on('child_added', (snapshot) => {
+            const followerId = snapshot.key;
+            db.ref(`users/${followerId}`).once('value', userSnap => {
+                const userData = userSnap.val();
+                if (userData) {
+                    const followerElement = createUserItemElement(followerId, userData);
+                    document.getElementById('followers-list').appendChild(followerElement);
                 }
             });
-        }
+        });
+    }
 
-        function loadGifts(userId) {
-            const giftsRef = db.ref(`users/${userId}/gifts`);
-            giftsRef.on('value', snapshot => {
-                const giftsList = document.getElementById('gifts-list');
-                giftsList.innerHTML = '';
-                if (snapshot.exists()) {
-                    snapshot.forEach(giftSnap => {
-                        const giftId = giftSnap.key;
-                        const gift = giftSnap.val();
-                        const giftElement = document.createElement('div');
-                        giftElement.classList.add('col-md-4', 'col-sm-6');
-                        let sellButtonHTML = '';
-                        if (currentUser && userId === currentUser.uid) {
-                            sellButtonHTML = `<button class="btn btn-primary sell-gift-btn" data-gift-id="${giftId}" data-quantity="${gift.quantity}" data-price="${gift.price}">Bán</button>`;
-                        }
+    function loadGifts(userId) {
+        const giftsRef = db.ref(`users/${userId}/gifts`);
+        giftsRef.on('child_added', (snapshot) => {
+            const giftId = snapshot.key;
+            const gift = snapshot.val();
+            const giftElement = document.createElement('div');
+            giftElement.classList.add('col-md-4', 'col-sm-6');
+            let sellButtonHTML = '';
+            if (currentUser && userId === currentUser.uid) {
+                sellButtonHTML = `<button class="btn btn-primary sell-gift-btn" data-gift-id="${giftId}" data-quantity="${gift.quantity}" data-price="${gift.price}">Bán</button>`;
+            }
 
-                        giftElement.innerHTML = `
-                            <div class="card mb-4">
-                                <img src="${gift.itemImage}" class="card-img-top" alt="${gift.itemName}">
-                                <div class="card-body">
-                                    <h5 class="card-title">${gift.itemName}</h5>
-                                    <p class="card-text">Số lượng: ${gift.quantity}</p>
-                                    ${sellButtonHTML}
-                                </div>
-                            </div>
-                        `;
-                        giftsList.appendChild(giftElement);
-                    });
-                } else {
-                    giftsList.innerHTML = '<p>Chưa có quà tặng nào.</p>';
-                }
-            });
-        }
+            giftElement.innerHTML = `
+                <div class="card mb-4">
+                    <img src="${gift.itemImage}" class="card-img-top" alt="${gift.itemName}">
+                    <div class="card-body">
+                        <h5 class="card-title">${gift.itemName}</h5>
+                        <p class="card-text">Số lượng: ${gift.quantity}</p>
+                        ${sellButtonHTML}
+                    </div>
+                </div>
+            `;
+            document.getElementById('gifts-list').appendChild(giftElement);
+        });
+    }
 
         // --- UI Element Creation ---
         function createWallPostElement(post, postId) {
